@@ -52,6 +52,50 @@ import matplotlib.image as im
 import copy
 ```
 
+We start by initializing some parameters for the simulations: the frequency
+is $1000$ Hz with a length of 2 seconds. Then we plot the signals in the time
+domain and in the frequency domain
+
+A sine wave with a frequency of 5 Hz (5 cycles per second) and a frequency of 1.
+In the frequency domain there is a single spike at 5 Hz 
+
+For the multispectral case we added three sine waves with different frequencies
+(2, 7, 14) and amplitudes (2, 3, 6), which is reflected by the frequency domain
+plot.
+
+White noise it's just random numbers in both the time and frequency domains.
+There may be some peaks, but then again, it is just noise.
+
+Brownian noise is a different kind of noise, a different color of noise
+(sometimes called pink noise). It is just the integral, the cumulative sum
+of random noise. In the frequency domain, it looks like an exponential decay,
+a shape stemming from the nature of this time series.
+
+$1/f$ noise has a similar behavior to brownian noise, showing a gentle decay
+on the amplitude spectrum.
+
+A square wave pulse looks like a bunch of these kind of time-limited plateaus
+that repeat at regular intervals. In the frequency domain it goes down with
+increasing frequency, but seems to bounce several times afterwards. In fact,
+the rate of this bouncing turns out to be related to the duration of these
+plateaus. If we change the threshold from $0.9$ to $0.7$ it changes the
+frequency response. Changing the frequency of the sine wave that's
+being thresholded also would change the shape of the spectrum.
+
+An amplitude modulated signal (A.M. signal, the same as in the radio) is a
+pure sine wave at 40 hertz with amplitude modulations over time. Because the
+signal has amplitude changes over time (non-stationarities), the peak in
+frequency domain becomes wider with energy at frequencies we did not specify.
+This pertains to non-stationarities and signals, and the effects
+
+On a frequency modulated signal (f.M. signal, the same as in the radio), the
+amplitude is fixes but there are frequency is changes. On the frequency domain
+it has a broader 'hill', rather than the peak shown for an AM signal.
+
+Filtered noise also creates a signal that changes in its dynamics and its
+characteristics over time (non-stationary): both amplitude and frequency
+change over time.
+
 ```{python}
 # 1D Examples
 
@@ -59,106 +103,95 @@ srate = 1000
 time  = np.arange(0,2,1/srate)
 n     = len(time)
 hz    = np.linspace(0,srate,n)
+itp   = np.interp(
+    np.linspace(1, 10, n),
+    np.linspace(1,10,10),
+    np.random.rand(10)
+    )
 
-### pure sine wave
-signal = np.sin(2*np.pi*5*time)
+signals = {
+    'Pure sine': np.sin(2*np.pi*5*time), # Pure sine
+    'Multispectral': ( # Multi-spectral
+        2*np.sin(2*np.pi*5*time) +
+        3*np.sin(2*np.pi*7*time) +
+        6*np.sin(2*np.pi*14*time)
+        ),
+    'White noise': np.random.randn(n), # White noise
+    'Brownian/pink noise': np.cumsum(np.random.randn(n)) # Brownian noise
+}
 
-# ### multispectral wave
-# signal = 2*np.sin(2*np.pi*5*time) + 3*np.sin(2*np.pi*7*time) + 6*np.sin(2*np.pi*14*time)
+# 1/f noise
+ps = (
+    np.exp(1j * 2 * np.pi * np.random.rand(int(n/2))) *
+    .1 + np.exp(-(np.arange(int(n/2)))/50)
+    )
+signals['1/f noise'] = np.real(np.fft.ifft(np.concatenate((ps,ps[::-1])))) * n
 
-# ### white noise
-# signal = np.random.randn(n)
+# square wave
+square = np.zeros(n)
+square[np.sin(2 * np.pi * 3 * time) > .9] = 1
+signals['Square wave'] = square
 
-# ### Brownian noise (aka random walk)
-# signal = np.cumsum(np.random.randn(n))
+# AM (amplitude modulation)
+signals['AM (Amplitude modulation)'] = 10 * np.sin(2 * np.pi * 40 * time) * itp
 
-# ### 1/f noise
-# ps   = np.exp(1j*2*np.pi*np.random.rand(int(n/2))) * .1+np.exp(-(np.arange(int(n/2)))/50)
-# ps   = np.concatenate((ps,ps[::-1]))
-# signal = np.real(np.fft.ifft(ps)) * n
+# FM (frequency modulation)
+freqmod = 20 * itp
+signals['FM (frequency modulation)'] = np.sin(
+    2 * np.pi * ((10 * time + np.cumsum(freqmod))/srate)
+    )
 
-# ### square wave
-# signal = np.zeros(n)
-# signal[np.sin(2*np.pi*3*time)>.9] = 1
-
-# ### AM (amplitude modulation)
-# signal = 10*np.interp(np.linspace(1,10,n),np.linspace(1,10,10),np.random.rand(10)) * np.sin(2*np.pi*40*time)
-
-# ### FM (frequency modulation)
-# freqmod = 20*np.interp(np.linspace(1,10,n),np.linspace(1,10,10),np.random.rand(10))
-# signal  = np.sin( 2*np.pi * ((10*time + np.cumsum(freqmod))/srate) )
-
-# ### filtered noise
-# signal = np.random.randn(n)     # start with noise
-# s  = 5*(2*np.pi-1)/(4*np.pi)    # normalized width
-# fx = np.exp(-.5*((hz-10)/s)**2) # gaussian
-# fx = fx/np.max(fx)              # gain-normalize
-# signal = 20*np.real( np.fft.ifft( np.fft.fft(signal)**fx) )
+# filtered noise
+signal = signals['White noise']    # start with noise
+s  = 5*(2*np.pi-1)/(4*np.pi)    # normalized width
+fx = np.exp(-.5*((hz-10)/s)**2) # gaussian
+fx /= np.max(fx)              # gain-normalize
+signals['Filtered noise'] = 20*np.real( np.fft.ifft( np.fft.fft(signal)**fx) )
 
 
 
 # compute amplitude spectrum
-ampl = 2*np.abs(np.fft.fft(signal)/n)
 
 
-## visualize!
-fig,ax = plt.subplots(2,1,figsize=(10,6))
-ax[0].plot(time,signal)
-ax[0].set_xlabel('Time (sec.)')
-ax[0].set_xlabel('Amplitude')
-ax[0].set_title('Time domain')
-ax[0].set_xlim(time[[0,-1]])
+count = len(signals)
+fig, ax = plt.subplots(count, 2, sharex='col', figsize=(7.5, 1 * count))
+for row_idx, (name, signal) in enumerate(signals.items()):
 
-ax[1].plot(hz,ampl,'s-')
-ax[1].set_xlabel('Frequency (Hz)')
-ax[1].set_xlabel('Amplitude')
-ax[1].set_title('Frequency domain')
-ax[1].set_xlim([0,100])
+    ax[row_idx, 0].set_title(name, loc='left')
+    ax[row_idx, 0].plot(time, signal)
+    ax[row_idx, 0].set_xlim(time[[0,-1]])
 
-plt.tight_layout()
-plt.show()
+    ampl = 2*np.abs(np.fft.fft(signal)/n)
+    ax[row_idx, 1].plot(hz, ampl,'-')
+    # ax[row_idx, 1].set_yticks([])
+    ax[row_idx, 1].set_xlim([0,100])
+
+ax[-1, 0].set_xlabel('Time (sec.)')
+ax[-1, 1].set_xlabel('Frequency (Hz)')
+fig.supylabel('Amplitude')
+fig.tight_layout();
 ```
 
+## 2D signals
 
 ```{python}
+def plot2d(img):
 
+    # power and phase spectra
+    img_x = np.fft.fftshift(np.fft.fft2(img))
+    power = np.log(np.abs(img_x))
+    phase = np.angle(img_x)
+
+    ## show the results!
+    fig, axes = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(8,8))
+    titles = ['Space domain', 'Amplitude spectrum', 'Phase spectrum']
+    for ax_idx, array in enumerate((img, power, phase)):
+        axes[ax_idx].imshow(array)
+        axes[ax_idx].set_title(titles[ax_idx])
+    fig.tight_layout()
 ```
 
-
 ```{python}
-## 2D examples
-
-
-### gabor patch
-width = 20      # width of gaussian
-sphs  = np.pi/4 # sine phase
-lims = np.arange(-91,92)
-y,x  = np.meshgrid(lims,lims)
-xp   = x*np.cos(sphs) + y*np.sin(sphs)
-yp   = y*np.cos(sphs) - x*np.sin(sphs)
-gaus2d = np.exp(-(xp**2 + yp**2) / (2*width**2))
-sine2d = np.sin( 2*np.pi*.02*xp )
-img    = sine2d * gaus2d
-
-
-# ### white noise
-# img = np.random.randn(len(img),len(img))
-
-
-# ### portrait
-# lenna = im.imread('Lenna.png')
-# img   = np.mean(lenna,axis=2)
-
-
-# ### low-pass filtered Lenna
-# width = .1    # width of gaussian (normalized Z units)
-# meshx = np.linspace(-2,2,img.shape[0])
-# y,x   = np.meshgrid(meshx,meshx)
-# gaus2d= np.exp(-(x**2 + y**2) / (2*width**2)) # add 1- at beginning to invert filter
-# imgX  = np.fft.fftshift(np.fft.fft2(img))
-# img   = np.real(np.fft.ifft2(np.fft.fftshift(imgX*gaus2d)))
-
-
 # ### high-pass filtered Lenna
 # width = .3  # width of gaussian (normalized Z units)
 # meshx = np.linspace(-2,2,img.shape[0])
@@ -175,33 +208,81 @@ img    = sine2d * gaus2d
 # ridx   = np.random.choice(len(phas2)**2,size=len(phas2)**2) # randomization index
 # rphas2 = np.reshape(phas2[np.unravel_index(ridx,phas2.shape)],phas2.shape) # random phases
 # img    = np.real(np.fft.ifft2(np.fft.fftshift(powr2*np.exp(1j*rphas2))))
+```
 
+A Gábor patch, it's like a spatial sine wave, plus a Gaussian. On the space
+domain plot you can notice there is a sinusoidal pattern going from the top
+left to the bottom right. It is also darker around the center and then gets
+lighter around the edges. On the amplitude and the phase spectrums, you can
+see that interpreting the fourier transform of an image is more complex than
+a one-dimensional time series.
 
+```{python}
+# gabor patch
+width = 20      # width of gaussian
+sphs  = np.pi/4 # sine phase
+lims = np.arange(-91,92)
+y,x  = np.meshgrid(lims,lims)
+xp   = x*np.cos(sphs) + y*np.sin(sphs)
+yp   = y*np.cos(sphs) - x*np.sin(sphs)
+gaus2d = np.exp(-(xp**2 + yp**2) / (2*width**2))
+sine2d = np.sin( 2*np.pi*.02*xp )
 
+plot2d(sine2d * gaus2d)
+```
 
+If we generate an image containing pure white noise the amplitude and the
+phase are just noise as well.
 
-# power and phase spectra
-imgX  = np.fft.fftshift(np.fft.fft2(img))
-powr2 = np.log(np.abs(imgX))
-phas2 = np.angle(imgX)
+```{python}
+# white noise
+plot2d(np.random.randn(183, 183))
+```
 
+Now I'm going to show you a picture that's very often used in computer science.
+When you look at this amplitude, you would never guess that this is what the
+picture looks like. However, all of the information that's contained in this
+picture is perfectly represented by the combination of the amplitude and the
+phase spectrum.
 
+```{python}
+lenna = np.mean(im.imread('FourierMXC_01_intro/Lenna.png'),axis=2)
+plot2d(lenna)
+```
 
-## show the results!
-fig = plt.figure(figsize=(8,8))
-gs  = fig.add_gridspec(2,2)
-ax1 = fig.add_subplot(gs[:,0])
-ax2 = fig.add_subplot(gs[0,1])
-ax3 = fig.add_subplot(gs[1,1])
+We can apply a low pass filter to the data by applying a gaussian to the
+frequency domain representation, and then reconstruct the image using the
+inverse fourier transform. Now the image has become blurry. Conversely, a 
+high pass filter highlights the high frequency features of the image,
+the edges, which can be useful to determine the edges of the objects.
 
-ax1.imshow(img)
-ax1.set_title('Space domain')
+poo
 
-ax2.imshow(powr2)
-ax2.set_title('Amplitude spectrum')
+```{python}
+# ### low-pass filtered Lenna
+width = .1    # 
+meshx = np.linspace(-2,2, lenna.shape[0])
+y,x   = np.meshgrid(meshx, meshx)
 
-ax3.imshow(phas2)
-ax3.set_title('Phase spectrum')
+imgX  = np.fft.fftshift(np.fft.fft2(lenna))
+kernels = [
+    np.exp(-(x**2 + y**2) / (2* .1**2)), # .1 width of gaussian (normalized Z units)
+    1 - np.exp(-(x**2 + y**2) / (2 * .3**2)) # .3
+]
+for k in kernels:
+    plot2d(np.real(np.fft.ifft2(np.fft.fftshift(imgX * k))))
+```
 
-plt.show()
+If we translate an image to the frequency domain, scramble the phase, and bring
+it back to the space domain it looks nothing alike the original image. This
+just shows how important the phase spectrum is for a time series and for, an
+image.
+
+```{python}
+# ## phase-scrambled Lenna
+powr2  = np.abs(imgX)
+phas2  = np.angle(imgX)
+ridx   = np.random.choice(len(phas2)**2,size=len(phas2)**2) # randomization index
+rphas2 = np.reshape(phas2[np.unravel_index(ridx,phas2.shape)],phas2.shape) # random phases
+plot2d(np.real(np.fft.ifft2(np.fft.fftshift(powr2*np.exp(1j*rphas2)))))
 ```
