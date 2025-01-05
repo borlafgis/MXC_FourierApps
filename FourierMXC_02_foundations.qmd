@@ -12,11 +12,83 @@ from mpl_toolkits.mplot3d import Axes3D
 ```
 
 
----
-# VIDEO: Complex numbers
----
+To understand the Fourier transform from a mathematical and a computational
+perspective, you need to understand sine waves, complex numbers and
+the dot product. Integrating the first two leads to complex sine waves,
+whereas the last two lead to the complex dot product, the two base concepts
+to understand the complex Fourier coefficients and the Fourier transform.
 
+# Complex numbers
 
+The real number line is centered at 0, and stretches infinitely, containing all
+numbers, both negative (left) and positive (right). On this line, each number
+carries two pieces of information: its sign, and its magnitude, indicating
+wether if its at the left or the right of 0, and how far it is. This mental
+model is good for many cases, but there are problems in mathematics, physics, engineering, or signal processing that are more tractable working with a number
+plane defined with a real, and an imaginary axis ($x$ and $y$, respectively).
+
+The basis of the real axis is the number one, and the basis for the imaginary
+axis is the operator $i = \sqrt{-1}$. It is called the imaginary operator
+because there is not a quantity that actually exists because no squared number
+can be negative. $i$ was created with the intent to solve $x^{2} + 1 = 0$,
+where $x = i$. Note the imaginary operator can be written as $i$ or $j$.
+Mathematicians tend to prefer the former, whereas engineers use the latter
+because $i$ is used for electrical current intensity. 
+
+Also note many mathematicians, scientists and teachers have complained about
+using the word 'imaginary'. Even Gauss, who formalized the system of complex
+numbers and showed how to use complex numbers for calculus and geometry, hated
+the term imaginary and instead suggested that we use the term lateral. But
+for better or worse, imaginary is the standard term that everyone uses.
+
+The important thing to keep in mind is the fact Fourier transform uses these
+two-component complex numbers. Complex numbers have are referred to using the
+real and imaginary axis coordinates, just like how you would refer to $x$
+and $y$ coordinates on a normal Cartesian plane.
+
+So at this point, here is 23I, which means two units over positive on the real axis and three units positive on the imaginary axis.
+
+The reason why complex numbers are so useful is that they pack a lot of
+information into a very compact representation. So for just the real number
+line, a number has only two pieces of information. Its distance away from the
+origin and its sign meaning, whether it's to the left or to the right of zero.
+
+A complex number not only contains the real and imaginary coordinates, also
+define a line between this point ant the origin $(0, 0)$, which has an specific
+length and an angle relative to the axis... by convention, the positive real
+axis.
+
+The Fourier transform returns complex numbers and the distance (magnitude)
+and the angle represent the amplitude and the phase at some frequency.
+
+The key to computing the distance from the origin is to think about magnitude
+as the hypotenuse of a right triangle where the other two sides are the
+projection of the real and imaginary parts into their respective axes.
+thus, the squared distance is $|z|^{2}= real(z)^{2} + imag(z)^{2}$. The other
+way to calculate the magnitude is to multiply the number by its complex
+conjugate, which is the number with the sign of the imaginary part flipped.
+
+$$
+zz^{*} = (a + ib)(a - ib) = a^{2} + aib - aib - (bi)^{2} = a^{2} + b^{2}
+$$
+
+The other piece of information that we extract from a complex number is the
+angle of this line relative to the positive real axis.
+
+From trigonometry we know that the tangent of this angle theta is equal to
+the ratio of the imaginary part to the real part. The angle itself can be
+computed by calculating the inverse tangent, the arctangent of the fraction.
+
+$$
+\tan (\theta) = \frac{imag(z)}{real(z)}
+\rightarrow
+\theta = \arctan \frac{imag(z)}{real(z)} 
+$$
+
+Here, I'm showing that there are several ways to compute a complex number in
+Python. One possibility is to add a real and imaginary number and the other
+is to use the function `complex`, whose arguments are the real and imaginary
+parts, respectively.
 
 ```{python}
 # writing the complex number as real + imaginary
@@ -27,9 +99,12 @@ print(z)
 z = complex(4,3)    # this way
 z = complex('4+3j') # or this way
 print(z)
-
 ```
 
+It is possible to extract the real and imaginary parts of a complex number
+using the functions `np.real` and `np.imag`, respectively. Then, it is possible
+to plot this number on the complex plane: four units positive on the real axis
+and three units positive on the imaginary axis.
 
 ```{python}
 # plot the complex number on the complex plane
@@ -44,34 +119,33 @@ plt.xlabel('Real axis'), plt.ylabel('Imaginary axis')
 plt.show()
 ```
 
+The magnitude of that number (distance away from the origin) can be calculated
+using the Pythagorean theorem, or by using the absolute value (`np.abs`), which
+is less verbose.
 
 ```{python}
 # compute the magnitude of the complex number using Pythagorean theorem
 mag = np.sqrt( np.real(z)**2 + np.imag(z)**2 )
-
-# or using abs
 mag = np.abs(z)
 
 print( 'The magnitude is',mag )
 ```
 
+If the two sides are three and four, then the hypotenuse must be five.
+
+The angle between the positive real axis and the line connecting the origin
+and the complex point can be calculated as the arctangent of the imaginary part
+by the real part. It is also possible to use the simpler function `np.angle`
 
 ```{python}
-# compute the angle of the complex number using Pythagorean theorem
 phs = math.atan( np.imag(z) / np.real(z) )
-
-# or using abs
+phs = np.arctan2(np.imag(z), np.real(z))
 phs = np.angle(z)
 
 print( 'The angle is',phs )
 ```
 
-
----
-# VIDEO: Euler's formula
----
-
-
+# Euler's formula
 
 ```{python}
 x = np.linspace(-3,3,num=50)
