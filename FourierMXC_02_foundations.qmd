@@ -269,6 +269,53 @@ Notice is the dissociation between the length and the angle of the vector.
 
 # Sine waves and complex sine waves
 
+Complex sine waves, are the result of embedding a regular sine wave into
+Euler's formula. A formula for a simple sine wave is:
+
+$$
+a \sin ( 2 \pi f t + \theta)
+$$
+
+The sine wave has three parameters: amplitude $(a)$, frequency $(f)$, and
+phase $(\theta)$. Frequency refers to the time between two points with the
+same value (e.g., between peaks or troughs). It conveys the same information
+as the terms 'periodicity', 'interval', or 'cycle'. Frequency usually is
+conveyed as Hertz, the number of cycles per unit of time. For example, a sine
+wave at one hertz repeats itself once every second. A five hertz sine wave
+means five cycles per second or one cycle every 200 milliseconds.
+And point one hertz means one cycle every 10 seconds. Here you see a few
+examples of frequencies that you might be familiar with:
+
+* Resting heart rate is around 60 beats per minute, which is around one beat
+  per second (1 Hz).
+* Breathing is around 15 breaths per minute, or one breath every four seconds.
+  And that's around 2.5 Hertz.
+* Brain electrical activity fluctuates at around 10 hertz (alpha band).
+* FM radio is modulated sine waves in the megahertz range, and most movies
+  play at 30 frames per second, which is 30 hertz.
+* The cesium-133 isotope, which is used to synchronize clocks and satellites,
+  oscillates at over nine trillion hertz, which is really, really fast.
+
+Phase is quantified as the value of the sine wave as it crosses the point
+corresponding to time equals zero. Ultimately phase angle reflects the shift
+of the sine wave on the $x$ axis. Phase is a circular measure, it goes into
+a cycle, not just from negative to positive or left to right (se unit on UNIT).
+Two of the most important phases for sine waves are $0$ and $\pi/2$. These two
+phases define what are commonly called a sine wave and a cosine wave. An
+important property of sine and cosine is that they are orthogonal.
+
+The third property of a sine wave is its amplitude, distance between the trough
+and the peak, or the distance between zero and the peak, in case the signal is
+centered around $0$.
+
+Amplitude frequency and phase are independent of each other, meaning that none
+of the features determines any of the other features.
+
+Now I will show you some sine waves in Python. First we generate a vector of
+time points ranging between from zero to two seconds with 500 samples per
+second (sampling or discretization rate). Then we use the formula
+$\sin (2 \pi f t + \theta)$ to generate the wave as such.
+
 ```{python}
 # simulation parameters
 srate = 500; # sampling rate in Hz
@@ -288,6 +335,14 @@ plt.ylabel('Amplitude (a.u.)')
 plt.show()
 ```
 
+Sine and cosine are the same function, but they are orthogonal: cosine has a
+phase shift of $\pi/2, 90^{\circ}$, which is perpendicular to the real axis,
+and straight upwards along the imaginary axis.
+
+It is possible to think about amplitude and phase on the polar plane
+because amplitude is a non-negative linear measure, and phase is a circular
+measure.
+
 ```{python}
 # sine and cosine are the same but for a phase shift
 
@@ -302,6 +357,31 @@ plt.title('A sine and cosine with the same parameters.')
 plt.show()
 ```
 
+# Complex sine waves
+
+An imaginary sine wave can be made in the same way an complex number is made:
+by multiplying by the imaginary operator $i$. Therefore, a complex sine wave
+also can be made by combining a real part with an imaginary part.
+
+So what should be the real part and the imaginary part of a complex sine wave?
+Well, it's really just about taking sine waves with any pair of phases.
+However, $0$ and $\pi/2$ make a lot of sense because that corresponds to
+the real and the imaginary axes, or cosine and sine. This brings us back to
+to Euler's formula $e^{ik} = \cos(k) + i \sin(k)$, with
+$k = 2 \pi f t + \theta$, and thus $e^{ik} = e^{i 2 ft [+\theta]}$ ($\theta$
+is optional).
+
+
+So this is a complex sine wave... a time series with a real and an imaginary
+part (3D function). Now I'm going to switch to use Python as a tool to help
+to the equation  and its meaning. The formula of a complex sine wave is 
+
+$$
+a e^{i 2 \pi f t + \theta}
+$$
+
+this is applied to the `time`vector, and we can just plot the real and the
+imaginary parts on a 2D plot.
 
 ```{python}
 # complex sine waves
@@ -325,9 +405,11 @@ plt.xlabel('Time (sec.)'), plt.ylabel('Amplitude')
 plt.title('Complex sine wave projections')
 plt.legend()
 plt.show()
-
 ```
 
+We also can show the complex sine wave in 3D, where the axis are time and the
+real and imaginary parts. If we display the plane formed by time and the real
+or the imaginary axis we get a cosine or a sine, respectively.
 
 ```{python}
 # now show in 3D
@@ -339,12 +421,16 @@ ax.set_title('Complex sine wave in all its 3D glory')
 plt.show()
 ```
 
+## Why we need sine waves
 
----
+We need sine waves because if we tried to compute the Fourier transform with
+just real valued sines or cosines, the result would depend on the phase offset
+between the sine wave and the signal: shifting changing the phase would alter
+the spectrum even though the signal hasn't changed. Complex sine waves are just
+the right solution when used alongside the complex dot product .
+
+
 # VIDEO: The dot product
----
-
-
 
 ```{python}
 # two vectors
@@ -385,6 +471,7 @@ dp = np.dot(sinewave1,sinewave2);
 # print result
 print('dp =',dp)
 ```
+
 
 
 ```{python}
