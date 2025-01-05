@@ -24,7 +24,8 @@ The real number line is centered at 0, and stretches infinitely, containing all
 numbers, both negative (left) and positive (right). On this line, each number
 carries two pieces of information: its sign, and its magnitude, indicating
 wether if its at the left or the right of 0, and how far it is. This mental
-model is good for many cases, but there are problems in mathematics, physics, engineering, or signal processing that are more tractable working with a number
+model is good for many cases, but there are problems in mathematics, physics,
+engineering, or signal processing that are more tractable working with a number
 plane defined with a real, and an imaginary axis ($x$ and $y$, respectively).
 
 The basis of the real axis is the number one, and the basis for the imaginary
@@ -46,7 +47,8 @@ two-component complex numbers. Complex numbers have are referred to using the
 real and imaginary axis coordinates, just like how you would refer to $x$
 and $y$ coordinates on a normal Cartesian plane.
 
-So at this point, here is 23I, which means two units over positive on the real axis and three units positive on the imaginary axis.
+So at this point, here is 23I, which means two units over positive on the real
+xis and three units positive on the imaginary axis.
 
 The reason why complex numbers are so useful is that they pack a lot of
 information into a very compact representation. So for just the real number
@@ -145,70 +147,127 @@ phs = np.angle(z)
 print( 'The angle is',phs )
 ```
 
+![XKCD on complex numbers](https://imgs.xkcd.com/comics/complex_numbers.png)
+
 # Euler's formula
 
-```{python}
-x = np.linspace(-3,3,num=50)
+Euler's formula is related to complex numbers and Fourier transform: it will
+provide a compact notation for representing a lot of detailed spectral
+information. It also directly leads to what many people consider to be the most
+beautiful equation in all of mathematics.
 
-plt.plot(x,np.exp(x),label='$y=e^x$')
+$$
+e^{ik} = \cos(k) + i \sin(k)
+$$
 
-# some plotting touch-ups
-plt.axis([min(x),max(x),0,np.exp(x[-1])])
-plt.grid(True)
-plt.legend()
-plt.xlabel('x')
-plt.show()
+$e$ is a famous constant in mathematics that appears in trigonometry, complex
+analysis, differential equations or simulations. It is an irrational number
+(it keeps going on and on and on forever with no known pattern or limit).
+Its approximate value is $e = 2.718...$.
 
-```
+If we plot $e^{x}$ we can see the function always remains positive, starting
+from near-zero values when $x$ is negative, and having increasingly larger
+values when $x$ is positive.
 
+The derivative of $e^{x}$ is the very same function, which is quite a special
+property, although that's not really what we care about here.
 
-```{python}
-# [cos(k),sin(k)] is on the unit circle for any real k
+Exponentiation of $e$ with a complex number gives $e^{ik}$, where $i$ is the
+imaginary operator and $k$ is some number (sometimes written as $\phi$ or
+$\theta$).
 
-# define k (any real number)
-k = 2/np.pi
+Euler's formula says that $e^{ik} = \cos(k) + i \sin(k)$. It is a neat formula
+because it provides a link between complex numbers and trigonometry.
+In particular, if you think about an axis with cosine and sine defining the
+two axes, then all values of k, which is the angle of this line here, are
+somewhere on this unit circle. You might remember one of the trig identities,
+which says that cosine squared plus sine squared equals one, and that means
+that for any value K here, this expression corresponds to a unit length vector,
+a line that has a length of exactly one placed on the unit circle.
 
-# Euler's notation
-euler = np.exp(1j*k)
-
-# plot dot
-plt.plot(np.cos(k),np.sin(k),'ro')
-
-# draw unit circle for reference
-x = np.linspace(-np.pi,np.pi,num=100)
-plt.plot(np.cos(x),np.sin(x))
-
-# some plotting touch-ups
-plt.axis('square')
-plt.grid(True)
-plt.xlabel('Real axis'), plt.ylabel('Imaginary axis')
-plt.show()
-```
-
+In other words, $e^{ik}$ describes a vector from the origin to some point on
+a circle with radius one. Let's have a look in Matlab before moving forwards.
 
 ```{python}
 # Euler's formula with arbitrary vector magnitude
 
-m = 4; # magnitude
-k = np.pi/3; # phase
-compnum = m*np.exp( 1j*k );
+magnitudes = [1, .5]
+phases = [2/np.pi, np.pi/2]
 
-# extract magnitude and angle
-mag = np.abs(compnum);
-phs = np.angle(compnum);
+# Make the plots
+fig = plt.figure()
+cart = plt.subplot(121)
+polar = plt.subplot(122, projection='polar')
 
-plt.polar([phs,phs],[0,mag])
-plt.show()
+# Cartesian base
+x = np.linspace(-np.pi,np.pi,num=100)
+cart.plot(np.cos(x), np.sin(x), 'k', zorder=0)
+cart.set_aspect('equal')
+cart.grid(True)
+cart.set_ylabel('Imaginary axis')
+cart.set_xlabel('Real axis')
+
+# Polar base
+polar.set_yticks([.5])
+polar.set_ylim(top=1)
+polar.set_xticks(np.arange(np.pi/4, 2 * np.pi, np.pi/2))
+
+#loop along values
+for m, k in zip(magnitudes, phases):
+
+    # The number
+    c_number = m * np.exp( 1j * k )
+
+    # Cartesian
+    cart.plot([0, m * np.cos(k)], [0, m * np.sin(k)], zorder=1)
+    cart.scatter(m * np.cos(k), m * np.sin(k), zorder=2)
+
+    # Polar
+    # extract magnitude and angle
+    mag = np.abs(c_number)
+    phs = np.angle(c_number)
+    polar.plot([phs, phs], [0, mag])
+    polar.scatter(phs, mag, zorder=2)
 ```
 
+Here we are plotting a dot on the complex plane. The $x$ the cosine or the
+real axis, and $y$ the sine or imaginary axis. Regardless on how arbitrarily 
+large or small $k$ is, it still represents a point on this unit circle
+on the plane.
 
+So far we have talked about are unit vectors (magnitude of one), which lie on
+this unit circle in the complex plane, meaning $k$ is specified on radians.
 
----
-# VIDEO: sine waves and complex sine waves
----
+When $k = \pi$, then $e^{i\pi} = -1 + 0i$, which can be rewritten as
+$e^{i\pi} + 1 = 0$. This expression is considered the most beautiful and
+elegant mathematical equation ever discovered in human civilization.
+It contains four of the most important numbers in mathematics (the rational
+numbers $0$ and $1$, and the irrational numbers $e$ and $\pi$), as well as
+the the three fundamental arithmetic operations (addition, multiplication
+and exponentiation).
 
+To use Euler's formula to describe a vector that is longer or shorter than
+the unit circle, it is necessary to multiply this vector by some scalar
+(single number, e.g., $m$ for magnitude). This scalar, only changes the
+distance away from the origin. So this gives us
 
+$$
+m e^{ik} = m ( \cos(k) + i \sin(k) ) = m \cos(k) + m i \sin(k)
+$$
 
+$m$ is the magnitude or amplitude, and $k$ is the phase angle $(\theta)$.
+This is why Euler's formula is so practical for Fourier analysis: it is
+possible to read the critical information right off the number.
+
+First we define a magnitude $m$ and an angle $k$, to generate a complex
+number in Euler's notation. Then it is converted into rectangular notation
+or Cartesian notation, where you see the projection onto the real axis,
+the projection onto the imaginary axis, and we can extract the distance away
+from the origin and the angle relative to the positive real axis.
+
+Notice is the dissociation between the length and the angle of the vector.
+
+# Sine waves and complex sine waves
 
 ```{python}
 # simulation parameters
@@ -228,7 +287,6 @@ plt.xlabel('Time (sec.)')
 plt.ylabel('Amplitude (a.u.)')
 plt.show()
 ```
-
 
 ```{python}
 # sine and cosine are the same but for a phase shift
