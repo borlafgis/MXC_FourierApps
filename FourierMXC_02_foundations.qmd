@@ -606,7 +606,7 @@ print('dp =',dp)
 * If the frequency of the sine waves are different, the dot product becomes $0$
   (well, a minuscule number close to $0$).
 * When you use frequencies that are in steps of $1$ one $0.5$, the dot product 
-  will havs non-zero values. The reason for this is because of the sampling
+  will haves non-zero values. The reason for this is because of the sampling
   rate, a the subtle but important features of the FT implemented and computers
   (important, but explained later).
 * When the frequencies of the two sinewaves are the same, but the phases
@@ -622,7 +622,7 @@ a sine wave tapered by a Gaussian ($\exp \left( -t^{2} \right) / \sigma$).
 # with a signal
 
 # phase of signal
-theta = 0*np.pi/4;
+theta = 1*np.pi/4;
 
 
 # simulation parameters
@@ -647,27 +647,54 @@ dot product between the wave and the wavelet. At the end we just make a stem
 plot of the frequencies by the dot product.
 
 ```{python}
+# Prepare the time and the samples
+srate = 1000;
+time  = np.arange(-1.,1.,1./srate)
+
 # sine wave frequencies
 sinefrex = np.arange(2.,10.,.5);
 
-# initialize dot products vector
-dps = np.zeros(len(sinefrex));
+# with a signal
+phases = np.array([0, 1, 2]) * np.pi/4
 
-# loop over sine waves
-for fi in range(len(dps)):
+# Prepare the plot # https://stackoverflow.com/questions/23528477
+rows = len(phases) + 1
+fig, axarr = plt.subplots(rows, 1)
+for plot_row, theta in enumerate(phases, start=1):
 
-    # create sine wave
-    sinew = np.sin( 2*np.pi*sinefrex[fi]*time)
+  # generate the wavelet and plot
+  morlet = np.sin(2 * np.pi * 5 * time + theta) * np.exp( (-time**2) / .1)
+  axarr[0].plot(time, morlet)
+  axarr[0].set_ylabel('Amplitude (a.u.)')
+  axarr[0].set_xlabel('Time (sec.)')
+  axarr[0].set_title('Morlet wavelet')
 
-    # compute dot product
-    dps[fi] = np.dot( sinew,signal ) / len(time)
+  # initialize dot products vector
+  dps_real = np.zeros(len(sinefrex))
+  dps_cpx = np.zeros(len(sinefrex), dtype=complex)
+  
+  # Generate the wavelets and the dot products
+  for fi in range(len(sinefrex)):
 
+      # create real-valued sine wave and compute the dot product
+      sinew = np.sin( 2 * np.pi * sinefrex[fi] * time)
+      dps_real[fi] = np.dot(sinew, morlet)/len(time)
 
-# and plot
-plt.stem(sinefrex,dps)
-plt.xlabel('Sine wave frequency (Hz)'), plt.ylabel('Dot product')
-plt.title('Dot products with sine waves')
-plt.show()
+      # create sine wave
+      bothw = np.exp( 1j * 2 * np.pi * sinefrex[fi] * time )
+      dps_cpx[fi] = np.abs(np.vdot(bothw, morlet)/len(time))
+
+  # and plot
+  axarr[plot_row].vlines(sinefrex, 0, dps_real, label='sin')
+  axarr[plot_row].scatter(sinefrex, dps_cpx, label='both')
+  axarr[plot_row].set_ylim(0)
+
+  if plot_row > 1:
+    axarr[plot_row].sharey(axarr[1])
+
+#axarr[1].set_title('Dot products with sine waves')
+axarr[-1].set_xlabel('Sine wave frequency (Hz)')
+fig.tight_layout()
 ```
 
 The plot shows the dot product grows larger as we approach the frequency of
@@ -702,9 +729,192 @@ is going to be a complex dot product resulting from a complex sine wave.
   highly dependent on the phase relationship between the signal and those 
   sine waves.
 
----
-# VIDEO: The complex dot product
----
+# The complex dot product
+
+The complex dot product is just an extension of the real-valued dot product
+where one or both of the vectors contain complex numbers. The real part of
+the complex dot product reflects the dot product with the real part between
+the two signals, and the imaginary part of the complex dot product reflects
+the dot product with the imaginary part of the signals: we are just computing
+the dot product with two different signals in one computation.
+
+This illustrates the practical usefulness of working with complex numbers:
+We can implement two equations at the same time using one operation.
+
+In the real-valued dot product, the magnitude of the dot product encodes the
+strength of the relationship between the two vectors, just like the magnitude
+of the correlation coefficient indicates the strength of the relationship
+between the two variables.
+
+It's exactly the same idea for the complex dot product, with the difference
+that the magnitude of the complex dot product is the distance away from the
+origin, regardless of the sign or the orientation of this vector. So it's not
+just the real part or just the imaginary part; it's the combination of these
+two, using the Pythagorean theorem to obtain the length of this line.
+
+And this is just a quick reminder of how to compute the magnitude, or the
+length, of a complex dot product, a complex number, using the Pythagorean theorem.
+
+Now, I would like to return to the Python example, except here we are using
+complex wave instead of real-valued sine waves. When using a real-valued sine
+wave adjusting the phase of the signal, altered the magnitude of the product.
+
+So let's see if we get the same effect here.
+
+So I'm going to multiply this by one... er, I guess, one fourth -- change the zero to a one.
+
+And notice that shifted the signal a little bit, but it didn't change the dot products.
+
+And now here I'm not actually showing the dot product, because that is a complex number, as you can
+
+see here.
+
+Instead, I'm showing the magnitude of the dot product, or the distance of the complex dot product away
+
+from the origin in the complex plane.
+
+Now, you'll remember from the previous video that the really striking example was when this phase
+
+offset
+
+was pi over two. That produced an entire line of zeros; all the dot products were zero.
+
+Now if I run this again, you can see the dot product doesn't change.
+
+These are all still positive.
+
+So the question is: why does this now happen,
+
+because we're using complex sine waves instead of real value sine waves?
+
+The answer to this question is that the complex sine wave contains two sine waves
+
+at the same time. There is the cosine corresponding to the real part of this sine wave,
+
+And then there is the sine, which corresponds to the imaginary part of this complex sine wave.
+
+So the intersection of the cosine and the sine affects where the dot product is on the complex plane, but
+
+it doesn't affect the magnitude of the dot product.
+
+In other words, the distance of the complex product away from the origin of the complex
+
+plane.
+
+You can see that more clearly in this cell of code.
+
+So this is the same signal that we have been using now up here and also in the previous video. And here
+
+what I'm doing is creating a real-valued sine wave and a real valued cosine wave.
+
+Then I compute two separate products, so the dot product between, in both cases, the signal, and either
+
+the real valued sine wave or the real valued cosine wave. Here in this line of code, I'm putting the dot
+
+product together for these two elements, these two dot products, where the real part corresponds to
+
+the dot product with the cosine and the imaginary part of this complex number is from the dot product
+
+with the real valued sine wave and the signal.
+
+OK, and then I generate a plot.
+
+And so what I encourage you to do now is pause the video and play around with this theta parameter
+
+here. So you can set it to be one.
+
+You can set it to be two, you know, they don't need to be easy fractions that involve pi; you can
+
+set this to be, you know, whatever crazy number you want.
+
+And the point is that the line -- the complex number -- is always the same distance away from the origin,
+
+regardless of its orientation, regardless of the phase angle relative to the positive real axis.
+
+Finally, I want to illustrate this to you, using a movie, using an animation.
+
+So what I'm doing here is shifting this signal in phase over time. So you can see that the blue line,
+
+this is the signal is shifting in phase over time.
+
+Here you see the complex dot product.
+
+So at each step of this animation, compute the complex dot product with a complex sine wave, and just a real
+
+valued sine wave.
+
+So here I have the complex sine wave and the real valued sine wave.
+
+This is specifying the range of the phase offset.
+
+So we go from zero to seven PI over two.
+
+So it's almost a full cycle around in 100 steps.
+
+And then this is some code that just sets up these plots.
+
+If you are not so familiar with Matlab code and plotting code, you don't really need to worry about
+
+this stuff here.
+
+The important action happens in this loop here.
+
+So we loop over the different phase values.
+
+Again, this signal, and you can see this is the same signal we've been working with.
+
+It's a sine wave at five hertz, multiplied, or tapered by, a Gaussian. And over different iterations
+
+in this loop,
+
+the only thing that's changing is the phase offset of this signal.
+
+That's why it looks like it's shifting to the right here.
+
+Here I compute the dot product of the signal with the complex sine wave and the real valued sine wave, and
+
+then here I'm just plotting those. And then here is for the real valued dot product.
+
+So I run this again.
+
+And it's interesting to see that the real valued dot product is fluctuating back and forth on the real
+
+axis.
+
+And there are times, there are specific phases of the signal relative to the sine, where the real valued
+
+dot product is exactly zero.
+
+Let me run through this again. In contrast, the complex product is just floating around on this circle
+
+here.
+
+And so, again, what we really care about is the magnitude of this complex dot product, which is the
+
+distance away from the origin.
+
+And that is not changing for different relative phases between the signal and the sine wave.
+
+In this video, I taught you about the complex dot product. I want to stress that we are using complex
+
+numbers as a convenient tool to fix the problem that the dot product between a sine wave and a signal
+
+is phase dependent.
+
+You don't really need to worry about whether imaginary numbers really exist.
+
+The main thing to keep in mind is that the cosine corresponds to the real part of a complex sine wave,
+
+and the sine corresponds to the imaginary part of a complex sine wave.
+
+And that using a complex sine wave allows us to implement computations in a efficient way.
+
+All right, so you now know all of the foundational pieces of the Fourier transform. It is time to
+
+put those pieces together.
+
+
+
 
 ```{python}
 # phase of signal
