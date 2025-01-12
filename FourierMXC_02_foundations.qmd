@@ -647,27 +647,22 @@ dot product between the wave and the wavelet. At the end we just make a stem
 plot of the frequencies by the dot product.
 
 ```{python}
-# Prepare the time and the samples
+# Prepare the time frequencies
 srate = 1000;
 time  = np.arange(-1.,1.,1./srate)
-
-# sine wave frequencies
 sinefrex = np.arange(2.,10.,.5);
 
-# with a signal
-phases = np.array([0, 1, 2]) * np.pi/4
+# Prepare the plot
+fig, axarr = plt.subplots(2, 1)
+for multi in [0, 1, 2]:
 
-# Prepare the plot # https://stackoverflow.com/questions/23528477
-rows = len(phases) + 1
-fig, axarr = plt.subplots(rows, 1)
-for plot_row, theta in enumerate(phases, start=1):
+  # Set the theta and the line width
+  theta = multi * np.pi/4
+  width = (multi + 1)
 
   # generate the wavelet and plot
   morlet = np.sin(2 * np.pi * 5 * time + theta) * np.exp( (-time**2) / .1)
   axarr[0].plot(time, morlet)
-  axarr[0].set_ylabel('Amplitude (a.u.)')
-  axarr[0].set_xlabel('Time (sec.)')
-  axarr[0].set_title('Morlet wavelet')
 
   # initialize dot products vector
   dps_real = np.zeros(len(sinefrex))
@@ -685,15 +680,21 @@ for plot_row, theta in enumerate(phases, start=1):
       dps_cpx[fi] = np.abs(np.vdot(bothw, morlet)/len(time))
 
   # and plot
-  axarr[plot_row].vlines(sinefrex, 0, dps_real, label='sin')
-  axarr[plot_row].scatter(sinefrex, dps_cpx, label='both')
-  axarr[plot_row].set_ylim(0)
+  color =  axarr[0].lines[-1].get_color()
+  axarr[1].vlines(sinefrex, 0, dps_real, colors=color, lw=3*width,
+                  label='$' + str(multi) + r' \times \pi/4$')
 
-  if plot_row > 1:
-    axarr[plot_row].sharey(axarr[1])
+  axarr[1].scatter(sinefrex, dps_cpx, color='k')
+  axarr[1].set_ylim(0)
 
-#axarr[1].set_title('Dot products with sine waves')
-axarr[-1].set_xlabel('Sine wave frequency (Hz)')
+axarr[0].set_ylabel('Amplitude (a.u.)')
+axarr[0].set_xlabel('Time (sec.)')
+axarr[0].set_title('Morlet wavelet')
+
+axarr[1].legend(title=r'Offset ($\theta$)')
+axarr[1].set_title('Dot products with sine waves')
+axarr[1].set_ylabel('Dot product (unsigned magnitude)')
+axarr[1].set_xlabel('Sine wave frequency (Hz)')
 fig.tight_layout()
 ```
 
@@ -753,63 +754,116 @@ just the real part or just the imaginary part; it's the combination of these
 two, using the Pythagorean theorem to obtain the length of this line.
 
 And this is just a quick reminder of how to compute the magnitude, or the
-length, of a complex dot product, a complex number, using the Pythagorean theorem.
+length, of a complex dot product, a complex number, using the Pythagorean
+theorem.
 
 Now, I would like to return to the Python example, except here we are using
-complex wave instead of real-valued sine waves. When using a real-valued sine
-wave adjusting the phase of the signal, altered the magnitude of the product.
+complex sine waves instead of real-valued sine waves. When using a real-valued
+sine wave adjusting the phase of the signal, altered the magnitude of the
+product. In this case we are not showing the dot product, because that is a
+complex number, what we are showing is its magnitude, the distance of the
+complex dot product from the origin of the complex plane.
 
-So let's see if we get the same effect here.
+In the real-valued example when $\theta = \pi/2$ all the dot products where
+$\approx 0$. Now that we are working with a complex-valued sine wave the dot
+product magnitude doesn't change.
 
-So I'm going to multiply this by one... er, I guess, one fourth -- change the zero to a one.
+Complex sine wave contains two sine waves at the same time: the cosine
+corresponding to the real part, and the sine, the imaginary part. 
+The intersection of the cosine and the sine affects the position of the dot
+product, but it doesn't affect its magnitude, its distance away from the origin.
 
-And notice that shifted the signal a little bit, but it didn't change the dot products.
+```{python}
+# phase of signal
+theta = 0*np.pi/4;
 
-And now here I'm not actually showing the dot product, because that is a complex number, as you can
 
-see here.
+# simulation parameters
+srate = 1000;
+time  = np.arange(-1.,1.,1./srate)
 
-Instead, I'm showing the magnitude of the dot product, or the distance of the complex dot product away
+# signal
+sinew  = np.sin(2*np.pi*5*time + theta)
+gauss  = np.exp( (-time**2) / .1);
+signal = np.multiply(sinew,gauss)
 
-from the origin in the complex plane.
 
-Now, you'll remember from the previous video that the really striking example was when this phase
+# sine wave frequencies
+sinefrex = np.arange(2.,10.,.5);
 
-offset
+# plot signal
+plt.plot(time,signal)
+plt.xlabel('Time (sec.)'), plt.ylabel('Amplitude (a.u.)')
+plt.title('Signal')
+plt.show()
 
-was pi over two. That produced an entire line of zeros; all the dot products were zero.
 
-Now if I run this again, you can see the dot product doesn't change.
 
-These are all still positive.
+# initialize dot products vector
+dps = np.zeros(len(sinefrex),dtype=complex)
 
-So the question is: why does this now happen,
+# loop over sine waves
+for fi in range(len(dps)):
 
-because we're using complex sine waves instead of real value sine waves?
+    # create sine wave
+    sinew = np.exp( 1j*2*np.pi*sinefrex[fi]*time )
 
-The answer to this question is that the complex sine wave contains two sine waves
+    # compute dot product
+    dps[fi] = np.abs( np.vdot( sinew,signal ) / len(time) )
 
-at the same time. There is the cosine corresponding to the real part of this sine wave,
 
-And then there is the sine, which corresponds to the imaginary part of this complex sine wave.
+# and plot
+plt.stem(sinefrex,dps)
+plt.xlabel('Sine wave frequency (Hz)'), plt.ylabel('Dot product')
+plt.title('Dot products with sine waves')
+plt.show()
+```
 
-So the intersection of the cosine and the sine affects where the dot product is on the complex plane, but
 
-it doesn't affect the magnitude of the dot product.
+```{python}
+# in more detail...
 
-In other words, the distance of the complex product away from the origin of the complex
+# phase of signal
+theta = 1*np.pi/4;
 
-plane.
+# signal
+sinew  = np.sin(2*np.pi*5*time + theta)
+gauss  = np.exp( (-time**2) / .1)
+signal = np.multiply(sinew,gauss)
 
-You can see that more clearly in this cell of code.
+# create sine and cosine waves
+sinew = np.sin( 2*np.pi*5*time )
+cosnw = np.cos( 2*np.pi*5*time )
 
-So this is the same signal that we have been using now up here and also in the previous video. And here
+# compute dot products
+dps = np.dot( sinew,signal ) / len(time)
+dpc = np.dot( cosnw,signal ) / len(time)
 
-what I'm doing is creating a real-valued sine wave and a real valued cosine wave.
+# combine sine and cosine into complex dot product
+dp_complex = complex(dpc,dps) # cos/sin were swapped in the video
+mag = np.abs(dp_complex)
+phs = np.angle(dp_complex)
 
-Then I compute two separate products, so the dot product between, in both cases, the signal, and either
+# and plot
+plt.plot( dpc , dps ,'ro')
+plt.xlabel('Cosine axis')
+plt.ylabel('Sine axis')
+plt.axis('square')
+plt.grid(True)
+plt.axis([-.2,.2,-.2,.2])
+plt.show()
 
-the real valued sine wave or the real valued cosine wave. Here in this line of code, I'm putting the dot
+# draw a line using polar notation
+plt.polar([phs,phs],[0,mag])
+plt.show()
+```
+
+You can see that more clearly in this cell of code. It contains the same signal
+we used in previous examples. What we are doing is creating a real-valued sine
+wave and a real valued cosine wave, compute the dot product between the wavelet
+and both real-valued waves, sine and cosine.
+
+ Here in this line of code, I'm putting the dot
 
 product together for these two elements, these two dot products, where the real part corresponds to
 
@@ -912,94 +966,6 @@ And that using a complex sine wave allows us to implement computations in a effi
 All right, so you now know all of the foundational pieces of the Fourier transform. It is time to
 
 put those pieces together.
-
-
-
-
-```{python}
-# phase of signal
-theta = 0*np.pi/4;
-
-
-# simulation parameters
-srate = 1000;
-time  = np.arange(-1.,1.,1./srate)
-
-# signal
-sinew  = np.sin(2*np.pi*5*time + theta)
-gauss  = np.exp( (-time**2) / .1);
-signal = np.multiply(sinew,gauss)
-
-
-# sine wave frequencies
-sinefrex = np.arange(2.,10.,.5);
-
-# plot signal
-plt.plot(time,signal)
-plt.xlabel('Time (sec.)'), plt.ylabel('Amplitude (a.u.)')
-plt.title('Signal')
-plt.show()
-
-
-
-# initialize dot products vector
-dps = np.zeros(len(sinefrex),dtype=complex)
-
-# loop over sine waves
-for fi in range(len(dps)):
-
-    # create sine wave
-    sinew = np.exp( 1j*2*np.pi*sinefrex[fi]*time )
-
-    # compute dot product
-    dps[fi] = np.abs( np.vdot( sinew,signal ) / len(time) )
-
-
-# and plot
-plt.stem(sinefrex,dps)
-plt.xlabel('Sine wave frequency (Hz)'), plt.ylabel('Dot product')
-plt.title('Dot products with sine waves')
-plt.show()
-```
-
-
-```{python}
-# in more detail...
-
-# phase of signal
-theta = 1*np.pi/4;
-
-# signal
-sinew  = np.sin(2*np.pi*5*time + theta)
-gauss  = np.exp( (-time**2) / .1)
-signal = np.multiply(sinew,gauss)
-
-# create sine and cosine waves
-sinew = np.sin( 2*np.pi*5*time )
-cosnw = np.cos( 2*np.pi*5*time )
-
-# compute dot products
-dps = np.dot( sinew,signal ) / len(time)
-dpc = np.dot( cosnw,signal ) / len(time)
-
-# combine sine and cosine into complex dot product
-dp_complex = complex(dpc,dps) # cos/sin were swapped in the video
-mag = np.abs(dp_complex)
-phs = np.angle(dp_complex)
-
-# and plot
-plt.plot( dpc , dps ,'ro')
-plt.xlabel('Cosine axis')
-plt.ylabel('Sine axis')
-plt.axis('square')
-plt.grid(True)
-plt.axis([-.2,.2,-.2,.2])
-plt.show()
-
-# draw a line using polar notation
-plt.polar([phs,phs],[0,mag])
-plt.show()
-```
 
 
 ```{python}
