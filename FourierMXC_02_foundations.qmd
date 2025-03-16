@@ -13,20 +13,21 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 To understand the Fourier transform from a mathematical and a computational
-perspective, you need to understand sine waves, complex numbers and
-the dot product. Integrating the first two leads to complex sine waves,
-whereas the last two lead to the complex dot product, the two base concepts
-to understand the complex Fourier coefficients and the Fourier transform.
+perspective, you need to understand sine waves, complex numbers and the dot
+product. Integrating the first two leads to complex sine waves, whereas the
+last two lead to the complex dot product, both necessary concepts to understand
+the complex Fourier coefficients and the Fourier transform.
 
 # Complex numbers
 
 The real number line is centered at 0, and stretches infinitely, containing all
 numbers, both negative (left) and positive (right). On this line, each number
-carries two pieces of information: its sign, and its magnitude, indicating
-wether if its at the left or the right of 0, and how far it is. This mental
-model is good for many cases, but there are problems in mathematics, physics,
-engineering, or signal processing that are more tractable working with a number
-plane defined with a real, and an imaginary axis ($x$ and $y$, respectively).
+carries two pieces of information: its sign, and its magnitude. The former
+indicates wether it is at the left or the right of 0, and the latter indicates
+how far it is. This mental model is good for many cases, but there are problems
+in mathematics, physics, engineering, or signal processing that are more
+tractable working with a number plane defined with a real, and an imaginary
+axis ($x$ and $y$, respectively).
 
 The basis of the real axis is the number one, and the basis for the imaginary
 axis is the operator $i = \sqrt{-1}$. It is called the imaginary operator
@@ -47,28 +48,32 @@ two-component complex numbers. Complex numbers have are referred to using the
 real and imaginary axis coordinates, just like how you would refer to $x$
 and $y$ coordinates on a normal Cartesian plane.
 
-So at this point, here is 23I, which means two units over positive on the real
-xis and three units positive on the imaginary axis.
+So a point with coordinates $(2, 3i)$ [ADD  ILLUSTRATION], which means
+$2$ units over positive on the real axis, and $3$ units positive on the
+imaginary axis. Complex numbers are very useful because they pack a lot of
+information with a very compact representation. A real number has only two
+pieces of information: the distance away from the origin, and its sign,
+indicating it's to the left or to the right of zero.
 
-The reason why complex numbers are so useful is that they pack a lot of
-information into a very compact representation. So for just the real number
-line, a number has only two pieces of information. Its distance away from the
-origin and its sign meaning, whether it's to the left or to the right of zero.
+A complex number contains both the real and imaginary coordinates. But not only
+that!. This point is in a bidimensional space, where it defines a line between
+the point ant the origin $(0, 0)$. That line adds two additional pieces of
+information, which are the distance between both points (magnitude), and its
+angle $(\theta)$ relative to the positive real axis (chosen by convention).
 
-A complex number not only contains the real and imaginary coordinates, also
-define a line between this point ant the origin $(0, 0)$, which has an specific
-length and an angle relative to the axis... by convention, the positive real
-axis.
+The Fourier transform returns complex numbers, where the distance (magnitude)
+represents the amplitude of a frequency, and the angle represents the phase of
+said frequency.
 
-The Fourier transform returns complex numbers and the distance (magnitude)
-and the angle represent the amplitude and the phase at some frequency.
+## Magnitude
 
-The key to computing the distance from the origin is to think about magnitude
-as the hypotenuse of a right triangle where the other two sides are the
-projection of the real and imaginary parts into their respective axes.
-thus, the squared distance is $|z|^{2}= real(z)^{2} + imag(z)^{2}$. The other
-way to calculate the magnitude is to multiply the number by its complex
-conjugate, which is the number with the sign of the imaginary part flipped.
+The key to computing the magnitude is to think the line as the hypotenuse of a
+right triangle, where the other two sides are the projection of the real and
+imaginary parts into their respective axes. Thus, the squared distance is
+$|z|^{2}= real(z)^{2} + imag(z)^{2}$. The other way to calculate the magnitude
+is to multiply the number by its complex conjugate, which is the number with
+the sign of the imaginary part flipped. If we work through an example it
+becomes clear why:
 
 $$
 zz^{*} = (a + ib)(a - ib) = a^{2} + aib - aib - (bi)^{2} = a^{2} + b^{2}
@@ -77,15 +82,22 @@ $$
 The other piece of information that we extract from a complex number is the
 angle of this line relative to the positive real axis.
 
-From trigonometry we know that the tangent of this angle theta is equal to
-the ratio of the imaginary part to the real part. The angle itself can be
-computed by calculating the inverse tangent, the arctangent of the fraction.
+## Angle
+
+The angle is obtained using trigonometry. The tangent of the angle
+$\tan (\theta)$ is equal to is equal to the length of the imaginary part
+(opposite side) by the length of the real part (contiguous side). Thus, the
+angle is calculated as the arctangent of the fraction.
 
 $$
 \tan (\theta) = \frac{imag(z)}{real(z)}
 \rightarrow
-\theta = \arctan \frac{imag(z)}{real(z)} 
+\theta = \arctan \left( \frac{imag(z)}{real(z)} \right)
 $$
+
+## Python
+
+### Declaring complex numbers
 
 Here, I'm showing that there are several ways to compute a complex number in
 Python. One possibility is to add a real and imaginary number and the other
@@ -103,10 +115,21 @@ z = complex('4+3j') # or this way
 print(z)
 ```
 
-It is possible to extract the real and imaginary parts of a complex number
-using the functions `np.real` and `np.imag`, respectively. Then, it is possible
-to plot this number on the complex plane: four units positive on the real axis
-and three units positive on the imaginary axis.
+### Extracting the parts of an imaginary number
+
+It is possible to extract the real and imaginary parts of a complex number `z`
+using the methods `z.real` and `z.imag`, or the functions `np.real` and
+`np.imag`.
+
+
+```{python}
+print(z.real, z.imag)
+print(np.real(z), np.imag(z))
+```
+
+With these separate components is easy to plot the number on the complex plane:
+four units positive on the real axis and three units positive on the imaginary
+axis.
 
 ```{python}
 # plot the complex number on the complex plane
@@ -121,9 +144,12 @@ plt.xlabel('Real axis'), plt.ylabel('Imaginary axis')
 plt.show()
 ```
 
+### Magnitude
+
 The magnitude of that number (distance away from the origin) can be calculated
 using the Pythagorean theorem, or by using the absolute value (`np.abs`), which
-is less verbose.
+is less verbose. If the two sides are three and four, then the hypotenuse must
+be five.
 
 ```{python}
 # compute the magnitude of the complex number using Pythagorean theorem
@@ -133,7 +159,7 @@ mag = np.abs(z)
 print( 'The magnitude is',mag )
 ```
 
-If the two sides are three and four, then the hypotenuse must be five.
+### Angle
 
 The angle between the positive real axis and the line connecting the origin
 and the complex point can be calculated as the arctangent of the imaginary part
@@ -147,14 +173,17 @@ phs = np.angle(z)
 print( 'The angle is',phs )
 ```
 
+# XKCD explanation of why we need complex numbers
+
 ![XKCD on complex numbers](https://imgs.xkcd.com/comics/complex_numbers.png)
 
 # Euler's formula
 
-Euler's formula is related to complex numbers and Fourier transform: it will
-provide a compact notation for representing a lot of detailed spectral
-information. It also directly leads to what many people consider to be the most
-beautiful equation in all of mathematics.
+~~In the context of Fourier transform, Euler's it provides a compact notation for representing detailed spectral information.~~
+
+~~Euler's formula is related to complex numbers. It leads to what many people consider to be the most beautiful equation in all of mathematics.~~
+
+Euler's formula states:
 
 $$
 e^{ik} = \cos(k) + i \sin(k)
@@ -162,8 +191,8 @@ $$
 
 $e$ is a famous constant in mathematics that appears in trigonometry, complex
 analysis, differential equations or simulations. It is an irrational number
-(it keeps going on and on and on forever with no known pattern or limit).
-Its approximate value is $e = 2.718...$.
+(it keeps going on and on and on forever with no known pattern or limit) with
+an approximate value of $e = 2.718...$.
 
 If we plot $e^{x}$ we can see the function always remains positive, starting
 from near-zero values when $x$ is negative, and having increasingly larger
@@ -172,21 +201,26 @@ values when $x$ is positive.
 The derivative of $e^{x}$ is the very same function, which is quite a special
 property, although that's not really what we care about here.
 
-Exponentiation of $e$ with a complex number gives $e^{ik}$, where $i$ is the
+Exponentiation of $e$ to a complex number gives $e^{ik}$, where $i$ is the
 imaginary operator and $k$ is some number (sometimes written as $\phi$ or
 $\theta$).
 
 Euler's formula says that $e^{ik} = \cos(k) + i \sin(k)$. It is a neat formula
 because it provides a link between complex numbers and trigonometry.
 In particular, if you think about an axis with cosine and sine defining the
-two axes, then all values of k, which is the angle of this line here, are
-somewhere on this unit circle. You might remember one of the trig identities,
-which says that cosine squared plus sine squared equals one, and that means
-that for any value K here, this expression corresponds to a unit length vector,
-a line that has a length of exactly one placed on the unit circle.
+two axes, then all values of k, the angle, are somewhere on this unit circle.
 
-In other words, $e^{ik}$ describes a vector from the origin to some point on
-a circle with radius one. Let's have a look in Matlab before moving forwards.
+Following the trigonometric identity $\cos (x)^{2} + \sin (x)^{2} = 1$,
+for any angle $k$, Euler's formula corresponds to a line with a length of $1$
+(unit vector) somewhere on the unit circle. In other words, $e^{ik}$ describes
+a vector from the origin to some point on a circle with radius one.
+
+## Python
+
+Here we are plotting a dot on the complex plane. The $x$ the cosine or the
+real axis, and $y$ the sine or imaginary axis. Regardless on how arbitrarily 
+large or small $k$ is, it still represents a point on this unit circle
+on the plane.
 
 ```{python}
 # Euler's formula with arbitrary vector magnitude
@@ -230,13 +264,11 @@ for m, k in zip(magnitudes, phases):
     polar.scatter(phs, mag, zorder=2)
 ```
 
-Here we are plotting a dot on the complex plane. The $x$ the cosine or the
-real axis, and $y$ the sine or imaginary axis. Regardless on how arbitrarily 
-large or small $k$ is, it still represents a point on this unit circle
-on the plane.
+## The most beautiful equation
 
-So far we have talked about are unit vectors (magnitude of one), which lie on
-this unit circle in the complex plane, meaning $k$ is specified on radians.
+So far we have talked about are unit vectors (magnitude of one), lying on
+a unit circle in the complex plane. As $k$ is an angle, it is specified on
+units of radians.
 
 When $k = \pi$, then $e^{i\pi} = -1 + 0i$, which can be rewritten as
 $e^{i\pi} + 1 = 0$. This expression is considered the most beautiful and
@@ -246,18 +278,25 @@ numbers $0$ and $1$, and the irrational numbers $e$ and $\pi$), as well as
 the the three fundamental arithmetic operations (addition, multiplication
 and exponentiation).
 
+## Euler's formula and magnitude
+
 To use Euler's formula to describe a vector that is longer or shorter than
 the unit circle, it is necessary to multiply this vector by some scalar
-(single number, e.g., $m$ for magnitude). This scalar, only changes the
-distance away from the origin. So this gives us
+(single number, e.g., $m$ for magnitude). This scalar is a single number that
+only changes the distance away from the origin. So this gives us
 
 $$
 m e^{ik} = m ( \cos(k) + i \sin(k) ) = m \cos(k) + m i \sin(k)
 $$
 
-$m$ is the magnitude or amplitude, and $k$ is the phase angle $(\theta)$.
+$m$ is the magnitude or amplitude, the distance away from the origin, and the
+$k$ is the angle relative to the positive real axis (phase angle, $\theta$).
 This is why Euler's formula is so practical for Fourier analysis: it is
 possible to read the critical information right off the number.
+
+~~ In the future we will be calling numbers like this "Fourier coefficients", which is the key result of the fourier transform.~~
+
+## Python
 
 First we define a magnitude $m$ and an angle $k$, to generate a complex
 number in Euler's notation. Then it is converted into rectangular notation
@@ -265,26 +304,30 @@ or Cartesian notation, where you see the projection onto the real axis,
 the projection onto the imaginary axis, and we can extract the distance away
 from the origin and the angle relative to the positive real axis.
 
-Notice is the dissociation between the length and the angle of the vector.
+Notice is the dissociation between the length and the angle of the vector:
+the angle will not change regardless the length of the vector.
 
 # Sine waves and complex sine waves
 
-Complex sine waves, are the result of embedding a regular sine wave into
-Euler's formula. A formula for a simple sine wave is:
+## The regular sine wave
+
+The sine wave has three parameters: amplitude $(a)$, frequency $(f)$, and
+phase $(\theta)$.
 
 $$
 a \sin ( 2 \pi f t + \theta)
 $$
 
-The sine wave has three parameters: amplitude $(a)$, frequency $(f)$, and
-phase $(\theta)$. Frequency refers to the time between two points with the
-same value (e.g., between peaks or troughs). It conveys the same information
-as the terms 'periodicity', 'interval', or 'cycle'. Frequency usually is
-conveyed as Hertz, the number of cycles per unit of time. For example, a sine
-wave at one hertz repeats itself once every second. A five hertz sine wave
-means five cycles per second or one cycle every 200 milliseconds.
-And point one hertz means one cycle every 10 seconds. Here you see a few
-examples of frequencies that you might be familiar with:
+### Frequency
+
+Frequency refers to the time between two points with the same value (e.g.,
+between peaks or troughs). It conveys the same information as the terms
+'periodicity', 'interval', or 'cycle'. Frequency usually is conveyed as Hertz,
+the number of cycles per unit of time. For example, a sine wave at one hertz
+repeats itself once every second. A five hertz sine wave means five cycles per
+second or one cycle every 200 milliseconds. And point one hertz means one cycle
+every 10 seconds. Here you see a few examples of frequencies that you might be
+familiar with:
 
 * Resting heart rate is around 60 beats per minute, which is around one beat
   per second (1 Hz).
@@ -296,20 +339,28 @@ examples of frequencies that you might be familiar with:
 * The cesium-133 isotope, which is used to synchronize clocks and satellites,
   oscillates at over nine trillion hertz, which is really, really fast.
 
-Phase is quantified as the value of the sine wave as it crosses the point
-corresponding to time equals zero. Ultimately phase angle reflects the shift
-of the sine wave on the $x$ axis. Phase is a circular measure, it goes into
-a cycle, not just from negative to positive or left to right (se unit on UNIT).
+### Phase
+
+Phase is the starting value of the sine wave, the value with time is $0$.
+Ultimately phase angle reflects the shift of the sine wave on the $x$ axis.
+Phase is a circular measure, it goes into a cycle, not just from negative to
+positive or left to right (se unit on UNIT).
 Two of the most important phases for sine waves are $0$ and $\pi/2$. These two
 phases define what are commonly called a sine wave and a cosine wave. An
-important property of sine and cosine is that they are orthogonal.
+important property of sine and cosine is that they are orthogonal (see unit on
+orthogonality).
 
-The third property of a sine wave is its amplitude, distance between the trough
-and the peak, or the distance between zero and the peak, in case the signal is
-centered around $0$.
+### Amplitude
 
-Amplitude frequency and phase are independent of each other, meaning that none
+The third property of a sine wave is its amplitude, half of the distance
+between peaks and the the trough. In case the signal is centered around $0$,
+it also could be understood as the distance from either peak or through to the
+$0$.
+
+Amplitude, frequency and phase are independent of each other, meaning that none
 of the features determines any of the other features.
+
+### Python
 
 Now I will show you some sine waves in Python. First we generate a vector of
 time points ranging between from zero to two seconds with 500 samples per
@@ -337,7 +388,8 @@ plt.show()
 
 Sine and cosine are the same function, but they are orthogonal: cosine has a
 phase shift of $\pi/2, 90^{\circ}$, which is perpendicular to the real axis,
-and straight upwards along the imaginary axis.
+and straight upwards along the imaginary axis. That's why sine and cosine are
+orthogonal to each other.
 
 It is possible to think about amplitude and phase on the polar plane
 because amplitude is a non-negative linear measure, and phase is a circular
@@ -357,24 +409,44 @@ plt.title('A sine and cosine with the same parameters.')
 plt.show()
 ```
 
-# Complex sine waves
+## Complex sine waves
 
-An imaginary sine wave can be made in the same way an complex number is made:
-by multiplying by the imaginary operator $i$. Therefore, a complex sine wave
-also can be made by combining a real part with an imaginary part.
+An imaginary sine wave can be made in the same way as an imaginary number, by
+combining a real part with an imaginary part. So, what should be the real part
+and the imaginary parts? It's really just about taking sine waves with different
+phases (any pair). However, $0$ and $\pi/2$ make a lot of sense because that corresponds to the real and the imaginary axes, or cosine and sine.
 
-So what should be the real part and the imaginary part of a complex sine wave?
-Well, it's really just about taking sine waves with any pair of phases.
-However, $0$ and $\pi/2$ make a lot of sense because that corresponds to
-the real and the imaginary axes, or cosine and sine. This brings us back to
-to Euler's formula $e^{ik} = \cos(k) + i \sin(k)$, with
-$k = 2 \pi f t + \theta$, and thus $e^{ik} = e^{i 2 ft [+\theta]}$ ($\theta$
-is optional).
+So we take a real-valued sine wave and we combine that with a sine wave
+multiplied by the imaginary operator with a phase that is shifted $\pi/2$, and
+if the amplitude and the frequency remain unchanged, you can see we have just
+reconstructed the right hand side of Eueler's formula.
 
+$$
+e^{ik} = \cos(k) + i \sin(k)
+$$
 
-So this is a complex sine wave... a time series with a real and an imaginary
-part (3D function). Now I'm going to switch to use Python as a tool to help
-to the equation  and its meaning. The formula of a complex sine wave is 
+Everything happening inside the sine and the cosine can be replaced with $k$:
+
+$$
+k = 2 \pi f t + \theta
+$$
+
+If we substitute the $k$ on the left hand side we get:
+
+$$
+e^{ik} = e^{i 2 ft [+\theta]}
+$$
+
+Note the $\theta$ is optional.
+
+~~Notice it is not $e^{\cos (\dots)}$ because the exponent of the $e$ is what goes inside of the sine and the cosine functions.~~
+
+A complex sine is a time series with a real and an imaginary part, so it is
+a function with three dimensions.
+
+## Python
+
+The formula of a complex sine wave is 
 
 $$
 a e^{i 2 \pi f t + \theta}
@@ -408,8 +480,9 @@ plt.show()
 ```
 
 We also can show the complex sine wave in 3D, where the axis are time and the
-real and imaginary parts. If we display the plane formed by time and the real
-or the imaginary axis we get a cosine or a sine, respectively.
+real and imaginary parts, which looks spins around like a spring or a corkscrew.
+If we display the plane formed by time and the real or the imaginary axis we
+get a cosine or a sine, respectively.
 
 ```{python}
 # now show in 3D
@@ -423,26 +496,28 @@ plt.show()
 
 ## Why we need sine waves
 
-We need sine waves because if we tried to compute the Fourier transform with
-just real valued sines or cosines, the result would depend on the phase offset
-between the sine wave and the signal: shifting changing the phase would alter
-the spectrum even though the signal hasn't changed. Complex sine waves are just
-the right solution when used alongside the complex dot product .
+If we tried to compute the Fourier transform with just real valued sines or
+cosines, the result would depend on the phase offset between the sine wave and
+the signal: shifting changing the phase would alter the spectrum even though
+the signal hasn't changed. Complex sine waves are just the right solution when
+used alongside the complex dot product.
 
 
-# VIDEO: The dot product
+# The dot product
 
 The dot product is a simple procedure that underlies many signal processing
 techniques such as correlation, covariance, convolution, filtering and,
 of course, the Fourier transform.
 
-* I will explain both the algebraic and the geometric interpretations of the dot product.
+~~I will explain both the algebraic and the geometric interpretations of the dot product.~~
 
 The dot product is a single number that tells you about the relationship
 between two vectors ('lists') of numbers with the same number of elements.
 It can be expressed using algebra and using geometry. On the algebraic
 interpretation two vectors with the same number of elements are lined up,
-multiply each element in vector $a$ by the same element by in the vector $b$
+multiply each element in vector $\mathbf{a}$ by the same element by in the
+vector $\mathbf{b}$, and then the results of these pairwise multiplications are
+summed up:
 
 $$
 \begin{bmatrix}
@@ -457,6 +532,8 @@ $$
 =
 54
 $$
+
+## The algebraic interpretation of the dot product (Python)
 
 There are several ways to implement the dot product in Python. A possibility
 is to perform element-wise multiplication, and the sum the elements of the
@@ -473,27 +550,28 @@ dp = sum( np.multiply(v1,v2) )
 print('The dot product is',dp)
 ```
 
-In the geometric interpretation the two vectors are interpreted as two lines
-whose dot product is equivalent to the product of their lengths, times the
-cosine of the angle between the two vectors.
+## The geometric interpretation of the dot product
+
+In the geometric interpretation the two vectors are interpreted as two lines,
+and the ir dot product is equal to the product of their lengths, times the
+cosine of the angle $\theta$ between the two vectors [ADD FIGURE].
 
 $$
 d = |v||w| \cos (\theta_{vw})
 $$
 
+This may seem very different from the algebraic definition, but both reflect the same idea. The proof of this equivalence can be obtained from the law of
+cosines and some algebra [SEE ALGEBRA COURSE].
 
-* The algebraic and the geometric interpretation reflect the same concept
-(law of cosines and some algebra... see the course).
-
-The geometric interpetation provides two key insights about the dot product.
+The geometric interpretation provides two key insights about the dot product.
 
 * When the two vectors are perpendicular the dot product between the two 
   vectors is $0$ because the cosine of $90^{\circ}$, or $\pi/2$, is $0$.
   In this specific case the length of the vectors would is irrelevant.
-* The sign of the dot product reflects the relationship between the two
+* The sign of the dot product reflects the relationship between the two vectors
   If they meet at an acute angle $(\theta < 90^{\circ})$ the cosine is
   positive whereas it is negative if the angle is obtuse
-  $(\theta > 90^{\circ})$, leading to a positive valued dot product.
+  $(\theta > 90^{\circ})$.
 
 The other terms $(|v|, |w|)$ are just lengths (always non-negative), and
 they do not change the sign of the product.
@@ -529,7 +607,7 @@ $$
 -14
 $$
 
-Note this 'sign' property of the dot product only kolds if the vectors are
+Note this 'sign' property of the dot product only holds if the vectors are
 mean-centered, meaning the average of all the numbers within each vector is
 zero.
 
@@ -537,7 +615,7 @@ When the dot product is positive, the two vectors go up and down together,
 and when the dot product is negative, when one vector goes up, the other
 vector goes down.
 
-## What is the dot product really?
+## What is the dot product?
 
 What does it mean to have a single number that represents the relationship
 between two vectors?
@@ -557,22 +635,30 @@ correlation coefficient is computed as the dot product between the
 two variables.
 
 $$
-r = \frac{ \sum^{n}_{i=1}(x_i-\bar{x})(y_i-\bar{y}) }{%
-        \sqrt{\sum^{n}_{i=1}(x_i-\bar{x})^2}\sqrt{\sum^{n}_{i=1}(y_i-\bar{y})^2}}
+r = \frac{
+  \sum^{n}_{i=1}(x_i-\bar{x})(y_i-\bar{y})
+  }
+  {
+  \sqrt{\sum^{n}_{i=1}(x_i-\bar{x})^2}\sqrt{\sum^{n}_{i=1}(y_i-\bar{y})^2}
+  }
 $$
 
-Pearson correlation coefficient contains two normalization factors, one for
-mean centering, and the denominator. The point is that the numerator has
-element-wise multiplication between the two vectors whose elements are summed
-up just afterwards, the very definition of the product.
+You can see the dot product is embedded on the Pearson correlation coefficient,
+accompanied by two normalization factors: the mean centering and the
+denominator. Do not worry about these, you just need to remember the numerator
+has element-wise multiplication between the two vectors whose elements are
+summed up just afterwards, the very definition of the product.
 
 When interpreting the dot product, you can think about as a 'correlation
 coefficient' of sorts. In a Fourier transform, these normalizations are absent,
-and thus the result is different, but MXC thinks there are similarities and
-it's useful to see this link.
+and thus the result is different, but MXC thinks there are some conceptual
+similarities and it's useful to see this link.
+
+## Python
 
 Now, we are going to use Python to compute the dot product between sine waves
-of different frequencies, or different phases.
+of different frequencies, or different phases. This code creates two sine waves
+and calculates the dot product between them.
 
 ```{python}
 # dot products of sine waves
@@ -602,17 +688,13 @@ dp = np.dot(sinewave1,sinewave2);
 print('dp =',dp)
 ```
 
-* If both waves are identical the dot product is 2000.
-* If the frequency of the sine waves are different, the dot product becomes $0$
-  (well, a minuscule number close to $0$).
-* When you use frequencies that are in steps of $1$ one $0.5$, the dot product 
-  will haves non-zero values. The reason for this is because of the sampling
-  rate, a the subtle but important features of the FT implemented and computers
-  (important, but explained later).
+* If both waves are identical (same parameters) the dot product is 2000.
+* When frequencies are separated by multiples of $1$ or $0.5$, the dot product
+  becomes a near-zero value. For any other stel the dot product is be non-
+  zero. The reason for this is because of the sampling rate, a the subtle but important features of the FT implemented and computers (see later).
 * When the frequencies of the two sinewaves are the same, but the phases
-  differ by $\pi/2$ the dot product becomes $0$. A phase offset of $\pi/2$,
-  which corresponds to a sine and a cosine, means that the two signals, the
-  two sine waves, are orthogonal to each other.
+  differ by $\pi/2$ the dot product becomes $0$, because in that case both
+  waves are orthogonal to each other: if one is, the othe is cosine.
 
 Now, I'd like to try computing the dot product between a signal and a set of
 sinewaves with different frequencies. The signal is called a Morlet wavelet,
@@ -698,26 +780,20 @@ axarr[1].set_xlabel('Sine wave frequency (Hz)')
 fig.tight_layout()
 ```
 
-The plot shows the dot product grows larger as we approach the frequency of
-the signal (5 Hz), which you can see here.
-
-Notice the wavelet remains the same, while sine waves are changing. That
-means that these differences in the dot product magnitudes could be attributed
-to the similarity between one another depending on the frequency of the wave.
+Notice the wavelet remains the same, while sine waves are changing. The plot
+shows the dot product grows larger as we approach the frequency of the signal
+(5 Hz). That means that the differences in the dot product magnitudes could be attributed to the similarity between one another depending on the frequency of
+the wave.
 
 If the phrase offset of the signal `theta` is not $0$ it becomes obvious
 the resulting dot product spectrum is highly dependent on the phase of the
-signal, even though these sine waves are not dependent on this theta phase.
-
-with a theta = $1/4 \pi$ the wavelet shifts a little on the $x$ axis, and the
+signal, even though these sine waves are not dependent on this `theta` phase.
+With a theta = $1/4 \pi$ the wavelet shifts a little on the $x$ axis, and the
 dot products have decreased a little. When I set the phase to be $\pi/2$,
-all dot products become zero.
-
-Now, this is a pretty awkward feature of this analysis, the way I've set this
-up here, because the point of the Fourier transform is to determine how much
-energy there is at a frequency in a signal, and the exact phase really
-shouldn't matter. So clearly we need something else, and that something else
-is going to be a complex dot product resulting from a complex sine wave.
+all dot products become zero. This should not happen, because the point of the
+Fourier transform is to determine how much energy there is at a frequency in a
+signal, and thus, the exact phase shouldn't matter. We need something else:
+the complex dot product resulting from a complex sine wave.
 
 ## In this video
 
@@ -733,14 +809,10 @@ is going to be a complex dot product resulting from a complex sine wave.
 # The complex dot product
 
 The complex dot product is just an extension of the real-valued dot product
-where one or both of the vectors contain complex numbers. The real part of
-the complex dot product reflects the dot product with the real part between
-the two signals, and the imaginary part of the complex dot product reflects
-the dot product with the imaginary part of the signals: we are just computing
-the dot product with two different signals in one computation.
-
-This illustrates the practical usefulness of working with complex numbers:
-We can implement two equations at the same time using one operation.
+where one or both of the vectors contain complex numbers. Its real and imaginary
+parts are just the dot product between the real and imaginary parts of the vectors. This illustrates the practical usefulness of working with complex
+numbers: we are just computing the dot product with two different signals in
+one computation.
 
 In the real-valued dot product, the magnitude of the dot product encodes the
 strength of the relationship between the two vectors, just like the magnitude
@@ -757,21 +829,21 @@ And this is just a quick reminder of how to compute the magnitude, or the
 length, of a complex dot product, a complex number, using the Pythagorean
 theorem.
 
+[ILLUSTRATION]
+
 Now, I would like to return to the Python example, except here we are using
 complex sine waves instead of real-valued sine waves. When using a real-valued
 sine wave adjusting the phase of the signal, altered the magnitude of the
-product. In this case we are not showing the dot product, because that is a
-complex number, what we are showing is its magnitude, the distance of the
-complex dot product from the origin of the complex plane.
+product. In this case we are just showing the magnitude of the complex dot
+product (distance from the origin), leaving out the imaginary part.
 
 In the real-valued example when $\theta = \pi/2$ all the dot products where
 $\approx 0$. Now that we are working with a complex-valued sine wave the dot
-product magnitude doesn't change.
+product magnitude doesn't change. The intersection of the real and imaginary
+parts (cosine and sine, respectively) affects the position of the dot product,
+but it doesn't affect its magnitude.
 
-Complex sine wave contains two sine waves at the same time: the cosine
-corresponding to the real part, and the sine, the imaginary part. 
-The intersection of the cosine and the sine affects the position of the dot
-product, but it doesn't affect its magnitude, its distance away from the origin.
+~~Complex sine wave contains two sine waves at the same time: the cosine corresponding to the real part, and the sine, the imaginary part.~~
 
 ```{python}
 # in more detail...
@@ -813,11 +885,10 @@ plt.show()
 
 You can see that more clearly in this cell of code. It contains the same signal
 we used in previous examples. What we are doing is creating a real-valued sine
-wave and a real valued cosine wave, compute the dot product between the wavelet
-and both imaginary and real-valued waves, sine and cosine,  which will be the
-real and the imaginary part of a complex number. Setting the phase $(\theta)$
-to any value does not allter the magnitude in any way regardless of the phase,
-the angle relative to the positive real axis.
+wave and a real valued cosine wave, computing the dot product between the
+wavelet and both imaginary (sine) and real-valued waves (cosine),  which will
+be the real and the imaginary part of a complex number. Setting the phase
+$(\theta)$ to any value does not allter the magnitude in any way regardless the angle relative to the positive real axis (phase).
 
 ```{python}
 
@@ -884,10 +955,9 @@ Gaussian. The only thing that's changing is the phase offset of this signal.
 Then we just calculate the dot product between the signal and both complex
 and real-valued sine waves, and plot.
 
-The real valued dot product is fluctuates back and forth on the real axis.
-There are some specific phases where the real valued dot product is exactly
-zero. In contrast, the complex dot product is just floating around on a circle:
-the magnitude does not changing for different relative phases between the
+The real valued dot product fluctuates back and forth on the real axis, with some specific phases where the real valued dot product is exactly zero.
+In contrast, the complex dot product is just floating around on a circle:
+the magnitude does not change for different relative phases between the
 signal and the sine wave.
 
 ## Summary
@@ -896,7 +966,7 @@ Complex are used as a convenient tool to adress the fact the dot product
 between a sine wave and a signal is phase dependent.
 
 The main thing to keep in mind is that the cosine and the sine correspond to
-the real and the imaginary parts of a complex sine wave.
+the real and the imaginary parts of a complex sine wave, respectivaly.
 
 And that using a complex sine wave allows us to implement computations in a
 efficient way.
