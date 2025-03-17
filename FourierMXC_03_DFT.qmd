@@ -1,0 +1,733 @@
+# The discrete Fourier transform
+
+```{python}
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+import scipy.fftpack
+import random
+from mpl_toolkits.mplot3d import Axes3D
+```
+
+## the DFT works
+
+### Pseudocode for the DFT
+
+Create a loop going through each point in the signal. For each iteration $i$,
+create a complex sine wave with the same length as the signal, and a frequency
+defined as $i-1$. Then, calculate the dot product between the wave and the
+signal. The result is called a **Fourier coefficient**, from which it is
+possible to extract the amplitude of the angle relative to the positive real
+axis, as well as the magnitude. The latter represents the signal amplitude for each frequency, which can be squared to obtain their powers.
+
+## Python
+
+The first step is to simulate a signal as the sum two sine waves, one at $4$
+hertz, with an amplitude of $2.5$ and the another other at $6.5$ hertz, with
+an amplitude of $1.5$ and this sine wave has an amplitude of two point five.
+Simulating data is useful for learning the methodologies because you know the
+signal that was generated, making the outcome easier to predict.
+
+```{python}
+# create the signal
+srate  = 1000 # hz
+time   = np.arange(0.,2.,1/srate) # time vector in seconds
+pnts   = len(time) # number of time points
+signal = 2.5 * np.sin( 2*np.pi*4*time ) + 1.5 * np.sin( 2*np.pi*6.5*time )
+```
+
+Then we create a vector holding the complex sine waves ranging from 0 to near-1.
+Notice the count only reaches the length of the signal minus on before dividing
+by the length of the signal (number of time points). This may seem like an odd
+detail, but it is important to ensure the time vector is normalized like this
+[SEE VIDEO ABOUT NORMALIZATION]. We also prepare an output vector with the same
+length as the signal, where we will place the fourier coefficients.
+
+```{python}
+# prepare the Fourier transform
+fourTime = np.array(range(pnts))/pnts
+fCoefs   = np.zeros((len(signal)),dtype=complex)
+```
+
+For each iteration within the loop we take the $i^{th}$ frequency in `NAME` and use it to create a complex sine wave (`csw`). Once we have the signal we can
+calculate the dot product between the original sinal and the complex wave we
+just have generated.
+
+This dot product is the reason why the normalized time needs to have the same number of points as the original signal: otherwise we would not be able to
+compute a valid product between the sine wave and the signal.
+
+```{python}
+for fi in range(pnts):
+    
+    # create complex sine wave
+    csw = np.exp( -1j*2*np.pi*fi*fourTime )
+    
+    # compute dot product between sine wave and signal
+    # these are called the Fourier coefficients
+    fCoefs[fi] = np.sum( np.multiply(signal,csw) ) / pnts
+```
+
+~~Note this means the number of frequencies of the Fourier transform is controlled by the number of points in the signal!. There are several important aspects to the Fourier transform that you need to know about, but that will have to wait because there are other aspects that you need to learn first.~~
+
+After completing the loop we have a fourier coefficient per frequency. Now we
+can extract the magnitude, the distance of each coefficient away from the $0$.
+To obtain the signal amplitude in the units of the original signal requires multiplying the magnitude by two [SEE OTHER VIDEO].
+
+Now we plot the amplitude spectrum from our Fourier transform here. The time
+domain looks like [MAKE PLOT], whereas the amplitude in the frequency domain looks like:
+
+```{python}
+# extract amplitudes
+ampls = 2*np.abs(fCoefs)
+
+# compute frequencies vector
+hz = np.linspace(0,srate/2,int(math.floor(pnts/2.)+1))
+
+plt.stem(hz,ampls[range(len(hz))])
+plt.xlabel('Frequency (Hz)'), plt.ylabel('Amplitude (a.u.)')
+plt.xlim(0,10)
+plt.show()
+
+```
+
+Most of the Fourier coefficients are zero, except for $4$ and $6.5$, the two
+frequencies of the waves we added to generate the signal.
+
+An important detail about this visualization is that using a line-plot to show
+the results of a Fourier transform is not fully correct because the drawing a
+line implies we know the amplitude between points. However, it is not possible
+to measure what the signal looks like with an infinite level of detail, we only
+know is value at specific frequencies. Thus, it is more correct to use a stem plot or a bar plot to convey the results of a Fourier transform.
+
+We can also compare these results with the output of the fast Fourier transform
+FFT function: we apply the function, and extract the amplitudes from the Fourier coefficients. As we can see the result of the function and the loop-based
+result overlap. This is not a rigorous proof that these procedures are accurate, but the convergent results do provide evidence that we're doing the right thing here, because I think we can all agree to trust the Numpy FFT code.
+
+So to understand a little bit better how to interpret these coefficients.
+
+The outputs of this Fourier transform analysis, I'm going to plot two Fourier coefficients at four hertz
+
+and at four point five hertz. Remember that the Fourier coefficients are complex dot products.
+
+This is just one way of representing the information.
+
+This is the distance away from the origin.
+
+So let me see.
+
+So I'll go down to this code.
+
+So here I'm just finding the two indices in the vector of frequencies that correspond to four hertz
+
+and 4.5 hertz.
+
+So that's going to be this coefficient and this coefficient.
+
+I will talk more in a later video about how to construct this vector of Hertz, the vector of frequencies,
+
+and what exactly this line of code means.
+
+For now, you can just assume that this is a vector that converts from frequencies in indices to frequencies
+
+in Hertz, given our sampling rate and given the length of time of the signal.
+
+Anyway, here I extract the magnitude and the angle of the Fourier coefficients from these two
+
+frequency indices.
+
+And here I plot them, so let's see what this figure looks like.
+
+OK, so here we see two Fourier coefficients. This is the complex plane -- the real axis and the imaginary
+
+axis.
+
+And these are complex dot products.
+
+These are the Fourier coefficients from two frequencies.
+
+Now, the two frequencies are not labeled.
+
+One of these is four and one of these is four point five hertz.
+
+I will let you guess, based on this plot, which coefficient is four and which coefficient is 4.5.
+
+The point is that the larger the magnitude of the dot product, which here means the further away from
+
+the origin, the more similar the signal is to the sine wave at that frequency.
+
+So if the dot product were really close to the origin like this, then it would mean that the signal
+
+and the sine wave at this frequency.
+
+Are close to orthogonal, which means that the signal looks nothing like the sine wave at that frequency.
+
+On the other hand, the exact phase relationship between the signal and the sine wave is usually not
+
+something that we're very interested in.
+
+That's why it's much more common to ignore the phases and only show the magnitudes, which is the distance
+
+away from the origin.
+
+So this dot could be over here or it could be here or it could be here, and that would not affect the
+
+height of this point here.
+
+Now, that's not to say that these phase angles are unimportant.
+
+The phase values are crucial for applying the inverse Fourier transform.
+
+And you will see this in the section on Inverse Fourier transforms.
+
+In this video, I showed you how the discrete time Fourier transform works. It works by computing the dot
+
+product between the signal and a series of complex sine waves at different frequencies.
+
+There are many important details and subtleties packed into the code that I just showed you.
+
+And you need to understand all those details in order to really understand the Fourier transform.
+
+But in this video, I wanted to show you how the Fourier Transform is implemented
+
+using a for loop. Explaining all the important subtleties and details piece by piece is the goal of
+
+basically the rest of this course.
+
+```{python}
+## plot two Fourier coefficients
+
+coefs2plot = [0,0]
+coefs2plot[0] = np.argmin(np.abs(hz-4))
+coefs2plot[1] = np.argmin(np.abs(hz-4.5))
+
+# extract magnitude and angle
+mag = np.abs(fCoefs[coefs2plot])
+phs = np.angle(fCoefs[coefs2plot])
+
+
+# show the coefficients in the complex plane
+plt.plot( np.real(fCoefs[coefs2plot]) , np.imag(fCoefs[coefs2plot]) ,'o',
+         linewidth=2,markersize=10,markerfacecolor='r')
+
+# make plot look nicer
+plt.plot([-2,2],[0,0],'k',linewidth=2)
+plt.plot([0,0],[-2,2],'k',linewidth=2)
+axislims = np.max(mag)*1.1
+plt.grid()
+plt.axis('square')
+plt.xlim([-axislims, axislims])
+plt.ylim([-axislims, axislims])
+plt.xlabel('Real axis')
+plt.ylabel('Imaginary axis')
+plt.title('Complex plane')
+plt.show()
+```
+
+
+
+
+# VIDEO: Converting indices to frequencies
+
+
+```{python}
+
+pnts     = 16 # number of time points
+fourTime = np.array(range(pnts))/pnts
+
+for fi in range(pnts):
+    # create complex sine wave
+    csw = np.exp( -1j*2*np.pi*fi*fourTime )
+    
+    # and plot it
+    
+    loc = np.unravel_index(fi,[4, 4],'F')
+    plt.subplot2grid((4,4),(loc[1],loc[0]))
+    plt.plot(fourTime,np.real(csw))
+    plt.plot(fourTime,np.imag(csw))
+
+plt.show()
+```
+
+# VIDEO: Converting indices to frequencies, part 2
+
+---
+
+
+
+
+```python
+## code from the slides
+
+srate = 1000
+npnts = 100001
+
+# frequencies vector
+if npnts%2==0:
+  topfreq = srate/2
+else:
+  topfreq = srate/2 * (npnts-1)/npnts
+
+hz1 = np.linspace(0,srate/2,np.floor(npnts/2+1).astype(int))
+hz2 = np.linspace(0,topfreq,np.floor(npnts/2+1).astype(int))
+
+# some arbitary frequency to show
+n = 16
+print('%.9f\n%.9f'%(hz1[n],hz2[n]))
+
+```
+
+# VIDEO: Shortcut: Converting indices to frequencies
+
+
+
+```python
+## Case 1: ODD number of data points, N is correct
+
+# create the signal
+srate = 1000
+time  = np.arange(0,srate+1)/srate
+npnts = len(time)
+
+# Notice: A simple 15-Hz sine wave!
+signal = np.sin(15*2*np.pi*time)
+
+# its amplitude spectrum
+signalX = 2*np.abs(scipy.fftpack.fft(signal)) / len(signal)
+
+# frequencies vectors
+hz1 = np.linspace(0,srate,npnts+1)
+hz2 = np.linspace(0,srate,npnts)
+
+
+# plot it
+fig = plt.subplots(1,figsize=(10,5))
+plt.plot(hz1[:npnts],signalX,'bo',label='N+1')
+plt.plot(hz2,signalX,'rs',label='N')
+plt.xlim([14.9,15.1])
+plt.ylim([.99,1.01])
+plt.legend()
+plt.xlabel('Frequency (Hz)')
+plt.title(str(len(time)) + ' points long')
+plt.ylabel('Amplitude')
+plt.show()
+
+```
+
+
+```python
+## Case 2: EVEN number of data points, N+1 is correct
+
+# create the signal
+srate = 1000
+time  = np.arange(0,srate)/srate
+npnts = len(time)
+
+# Notice: A simple 15-Hz sine wave!
+signal = np.sin(15*2*np.pi*time)
+
+# its amplitude spectrum
+signalX = 2*np.abs(scipy.fftpack.fft(signal)) / len(signal)
+
+# frequencies vectors
+hz1 = np.linspace(0,srate,npnts+1)
+hz2 = np.linspace(0,srate,npnts)
+
+
+# plot it
+fig = plt.subplots(1,figsize=(10,5))
+plt.plot(hz1[:npnts],signalX,'bo',label='N+1')
+plt.plot(hz2,signalX,'rs',label='N')
+plt.xlim([14.9,15.1])
+plt.ylim([.99,1.01])
+plt.legend()
+plt.xlabel('Frequency (Hz)')
+plt.title(str(len(time)) + ' points long')
+plt.ylabel('Amplitude')
+plt.show()
+
+```
+
+
+```python
+## Case 3: longer signal
+
+# create the signal
+srate = 1000
+time  = np.arange(0,5*srate)/srate
+npnts = len(time)
+
+# Notice: A simple 15-Hz sine wave!
+signal = np.sin(15*2*np.pi*time)
+
+# its amplitude spectrum
+signalX = 2*np.abs(scipy.fftpack.fft(signal)) / len(signal)
+
+# frequencies vectors
+hz1 = np.linspace(0,srate,npnts+1)
+hz2 = np.linspace(0,srate,npnts)
+
+
+# plot it
+fig = plt.subplots(1,figsize=(10,5))
+plt.plot(hz1[:npnts],signalX,'bo',label='N+1')
+plt.plot(hz2,signalX,'rs',label='N')
+plt.xlim([14.99,15.01])
+plt.ylim([.99,1.01])
+plt.legend()
+plt.xlabel('Frequency (Hz)')
+plt.title(str(len(time)) + ' points long')
+plt.ylabel('Amplitude')
+plt.show()
+
+```
+
+# VIDEO: Normalized time vector
+
+
+```python
+# create the signal
+srate  = 1000 # hz
+time   = np.arange(0,2*srate)/srate # time vector in seconds
+pnts   = len(time) # number of time points
+signal = 2.5 * np.sin( 2*np.pi*4*time ) + \
+         1.5 * np.sin( 2*np.pi*6.5*time )
+
+
+# show the original signal
+plt.plot(time,signal,'k')
+plt.xlabel('Time (s)')
+plt.ylabel('Amplitude')
+plt.title('Time domain')
+plt.show()
+```
+
+
+```python
+# prepare the Fourier transform
+fourTime = np.arange(0,pnts)/pnts
+fCoefs   = np.zeros(len(signal),dtype=complex)
+
+for fi in range(pnts):
+    
+    # create complex sine wave
+    csw = np.exp( -1j*2*np.pi*fi*fourTime )
+    
+    # compute dot product between sine wave and signal
+    # these are called the Fourier coefficients
+    fCoefs[fi] = sum( signal*csw ) / pnts
+
+# extract amplitudes
+ampls = 2*abs(fCoefs)
+```
+
+
+```python
+# compute frequencies vector
+hz = np.linspace(0,srate/2,int(np.floor(pnts/2)+1))
+
+# plot amplitude
+plt.stem(hz,ampls[:len(hz)],'ks-')
+
+# make plot look a bit nicer
+plt.xlim([0,10])
+plt.ylim([-.01,3])
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Amplitude (a.u.)')
+plt.title('Amplitude spectrum')
+plt.show()
+
+
+# plot angles
+plt.stem(hz,np.angle(fCoefs[:len(hz)]),'ks-')
+
+# make plot look a bit nicer
+plt.xlim([0,10])
+plt.ylim([-np.pi,np.pi])
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Phase (rad.)')
+plt.title('Phase spectrum')
+plt.show()
+
+
+# finally, plot reconstructed time series on top of original time series
+reconTS = np.real(scipy.fftpack.ifft( fCoefs ))*pnts
+
+plt.plot(time,signal,'k',label='Original')
+plt.plot(time[::3],reconTS[::3],'r.',label='Reconstructed')
+plt.legend()
+plt.show()
+```
+
+
+---
+# VIDEO: Scaling Fourier coefficients
+---
+
+
+
+```python
+## incorrect amplitude units without normalizations
+
+# create the signal
+srate  = 1000 # hz
+time   = np.arange(0.,1.5,1/srate)  # time vector in seconds
+pnts   = len(time)   # number of time points
+signal = 2.5 * np.sin( 2*np.pi*4*time )
+
+
+# prepare the Fourier transform
+fourTime = np.array(range(pnts))/pnts
+fCoefs   = np.zeros(len(signal),dtype=complex)
+
+for fi in range(pnts):
+    # create complex sine wave and compute dot product with signal
+    csw = np.exp( -1j*2*np.pi*fi*fourTime )
+    fCoefs[fi] = np.sum( np.multiply(signal,csw) )
+
+
+# extract amplitudes
+ampls = np.abs(fCoefs);
+
+# compute frequencies vector
+hz = np.linspace(0,srate/2,num=int(math.floor(pnts/2.)+1))
+
+plt.stem(hz,ampls[range(len(hz))])
+plt.xlabel('Frequency (Hz)'), plt.ylabel('Amplitude (a.u.)')
+plt.xlim(0,10)
+plt.show()
+```
+
+
+---
+# VIDEO: Phase (this is the code used to generate the plots in the video)
+---
+
+
+
+```python
+## same amplitude, different phase
+
+# simulation parameters
+srate = 1000
+time  = np.arange(0.,2.,1/srate)
+npnts = len(time)
+
+# generate signal
+signal1 = 2.5*np.sin(2*np.pi*10*time +   0  ) # different phase values
+signal2 = 2.5*np.sin(2*np.pi*10*time + np.pi/2 )
+
+
+# prepare the Fourier transform
+fourTime = np.array(range(npnts)) / npnts
+signal1X = np.zeros((len(signal1)),dtype=complex)
+signal2X = np.zeros((len(signal2)),dtype=complex)
+
+for fi in range(npnts):
+    
+    # create complex sine wave
+    csw = np.exp( -1j*2*np.pi*fi*fourTime )
+    
+    # compute dot product between sine wave and signal
+    # these are called the Fourier coefficients
+    signal1X[fi] = np.sum( np.multiply(signal1,csw) ) / npnts
+    signal2X[fi] = np.sum( np.multiply(signal2,csw) ) / npnts
+
+
+# frequencies vector
+hz = np.linspace(0,srate/2,num=int(math.floor(npnts/2.)+1))
+
+# extract correctly-normalized amplitude
+signal1Amp = np.abs(signal1X[range(len(hz))])
+signal1Amp[1:] = 2*signal1Amp[1:]
+
+signal2Amp = np.abs(signal2X[range(len(hz))])
+signal2Amp[1:] = 2*signal2Amp[1:]
+
+
+# now extract phases
+signal1phase = np.angle(signal1X[0:len(hz)])
+signal2phase = np.angle(signal2X[0:len(hz)])
+
+
+# plot time-domain signals
+plt.subplot2grid((3,2),(0,0))
+plt.plot(time,signal1)
+
+plt.subplot2grid((3,2),(0,1))
+plt.plot(time,signal2,'k')
+
+plt.subplot2grid((3,2),(1,0))
+plt.stem(hz,signal1Amp)
+plt.xlim([0,20])
+
+plt.subplot2grid((3,2),(1,1))
+plt.stem(hz,signal2Amp)
+plt.xlim([0,20])
+
+plt.subplot2grid((3,2),(2,0))
+plt.stem(hz,signal1phase)
+plt.xlim([0,20])
+
+plt.subplot2grid((3,2),(2,1))
+plt.stem(hz,signal2phase)
+plt.xlim([0,20])
+
+plt.tight_layout()
+plt.show()
+```
+
+
+---
+# VIDEO: Averaging Fourier coefficients
+---
+
+
+
+```python
+# simulation parameters
+ntrials = 100
+srate   = 200 # Hz
+time    = np.arange(0,1,1/srate)
+pnts    = len(time)
+
+
+# create dataset
+data = np.zeros((ntrials,pnts))
+for triali in range(ntrials):
+    data[triali,:] = np.sin(2*np.pi*20*time + 2*np.pi*np.random.rand())
+
+# plot the data
+for i in range(ntrials):
+    plt.plot(time,data[i,:])
+plt.plot(time,np.mean(data,axis=0),'k',linewidth=3)
+plt.xlabel('Time (sec.)')
+plt.ylabel('Amplitude')
+plt.title('Time domain')
+# plt.xlim([0,.1])
+
+plt.show()
+
+```
+
+
+```python
+# get Fourier coefficients
+dataX = scipy.fftpack.fft(data,axis=1) / pnts
+hz = np.linspace(0,srate/2,int(np.floor(pnts/2)+1))
+
+# averaging option 1: complex Fourier coefficients, then magnitude
+ave1 = 2*np.abs( np.mean(dataX,axis=0) )
+
+# averaging option 2: magnitude, then complex Fourier coefficients
+ave2 = np.mean( 2*np.abs(dataX),axis=0 )
+
+# plot both amplitude spectra
+plt.stem(hz,ave1[0:len(hz)],'ks-',label='Average coefficients',use_line_collection=True)
+plt.stem(hz+.2,ave2[0:len(hz)],'ro-',label='Average amplitude',use_line_collection=True)
+plt.xlim([10,30])
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Amplitude')
+plt.title('Frequency domain')
+plt.legend()
+plt.show()
+```
+
+
+---
+# VIDEO: The DC coefficient
+---
+
+
+
+```python
+## incorrect DC reconstruction without careful normalization
+
+# create the signal
+srate  = 1000 # hz
+time   = np.arange(0.,2.,1/srate) # time vector in seconds
+pnts   = len(time) # number of time points
+signal =  1.5 + 2.5*np.sin( 2*np.pi*4*time )
+
+
+# prepare the Fourier transform
+fourTime = np.array(range(pnts))/pnts
+fCoefs   = np.zeros(len(signal),dtype=complex)
+
+for fi in range(pnts):
+    # create complex sine wave and compute dot product with signal
+    csw = np.exp( -1j*2*np.pi*fi*fourTime )
+    fCoefs[fi] = np.sum( np.multiply(signal,csw) )
+
+
+# extract amplitudes
+ampls = 2*np.abs(fCoefs/pnts);
+
+# compute frequencies vector
+hz = np.linspace(0,srate/2,num=int(math.floor(pnts/2.)+1))
+
+plt.stem(hz,ampls[0:len(hz)])
+plt.xlim(-.1,10)
+plt.xlabel('Frequency (Hz)'), plt.ylabel('Amplitude (a.u.)')
+plt.show()
+
+```
+
+
+---
+# VIDEO: Amplitude spectrum vs. power spectrum
+---
+
+
+
+```python
+# simulation parameters
+srate = 1000
+time  = np.arange(0,.85,1/srate)
+npnts = len(time)
+
+# generate signal
+signal = 2.5*np.sin(2*np.pi*10*time)
+
+# Fourier transform and frequencies
+signalX = scipy.fftpack.fft(signal) / npnts
+hz = np.linspace(0,srate/2,int(np.floor(len(time)/2)+1))
+
+
+# extract correctly-normalized amplitude
+signalAmp = np.abs(signalX[0:len(hz)])
+signalAmp[1:] = 2*signalAmp[1:]
+
+# and power
+signalPow = signalAmp**2
+
+
+plt.figure(figsize=(12,3))
+
+# plot time-domain signal
+plt.subplot2grid((1,3),(0,0))
+plt.plot(time,signal)
+plt.xlabel('Time (ms)')
+plt.ylabel('Amplitude')
+plt.title('Time domain')
+
+
+# plot frequency domain spectra
+plt.subplot2grid((1,3),(0,1))
+plt.plot(hz,signalAmp,'ks-',label='Amplitude')
+plt.plot(hz,signalPow,'rs-',label='Power')
+
+plt.xlim([0,20])
+plt.legend()
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Amplitude or power')
+plt.title('Frequency domain')
+
+# plot dB power
+plt.subplot2grid((1,3),(0,2))
+plt.plot(hz,10*np.log10(signalPow),'ks-')
+plt.xlim([0,20])
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Decibel power')
+
+plt.show()
+```
