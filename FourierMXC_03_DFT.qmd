@@ -97,101 +97,37 @@ An important detail about this visualization is that using a line-plot to show
 the results of a Fourier transform is not fully correct because the drawing a
 line implies we know the amplitude between points. However, it is not possible
 to measure what the signal looks like with an infinite level of detail, we only
-know is value at specific frequencies. Thus, it is more correct to use a stem plot or a bar plot to convey the results of a Fourier transform.
+know is value at specific frequencies. Thus, it is more correct to use a stem
+plot or a bar plot to convey the results of a Fourier transform.
 
 We can also compare these results with the output of the fast Fourier transform
 FFT function: we apply the function, and extract the amplitudes from the Fourier coefficients. As we can see the result of the function and the loop-based
 result overlap. This is not a rigorous proof that these procedures are accurate, but the convergent results do provide evidence that we're doing the right thing here, because I think we can all agree to trust the Numpy FFT code.
 
-So to understand a little bit better how to interpret these coefficients.
+## Second plot
 
-The outputs of this Fourier transform analysis, I'm going to plot two Fourier coefficients at four hertz
+The last plot was just a way to represent information contained in the fourier coefficients. Now I'm going to plot two Fourier coefficients at $4$ and $4.5$
+hertz. For this, I need to find the two indices in the frequency vector that correspond to these two frequencies [SEE NEXT VIDEO]. [...] For now, you can
+just assume that this is a vector that converts from frequencies in indices to
+frequencies in Hertz, given our sampling rate and given the length of time of
+the signal. Now I extract the magnitude and the angle of the coefficients and
+plot them on the complex plane (real axis, $x$, imaginary axis $y$). Larger 
+distances from the origin (magnitude) indicate the signal is more similar to
+a sine wave at that specific frequency. Thus, $4.5$, a frequency appearing in
+the signal is away from the origin.
 
-and at four point five hertz. Remember that the Fourier coefficients are complex dot products.
+If the dot product is really close to the origin, then it means that the signal
+and the sine wave at this frequency are close to orthogonal, which means that
+the signal looks nothing like the sine wave at that frequency. So $4$ is very
+close to $0$
 
-This is just one way of representing the information.
+When doing this kind of analysis, usually we are not interested in the exact phase relationship between the signal and the sine wave, so generally only magnitudes are shown. However, note phase angles also important important,
+as they are crucial for applying the inverse Fourier transform.
 
-This is the distance away from the origin.
+## Summary
 
-So let me see.
-
-So I'll go down to this code.
-
-So here I'm just finding the two indices in the vector of frequencies that correspond to four hertz
-
-and 4.5 hertz.
-
-So that's going to be this coefficient and this coefficient.
-
-I will talk more in a later video about how to construct this vector of Hertz, the vector of frequencies,
-
-and what exactly this line of code means.
-
-For now, you can just assume that this is a vector that converts from frequencies in indices to frequencies
-
-in Hertz, given our sampling rate and given the length of time of the signal.
-
-Anyway, here I extract the magnitude and the angle of the Fourier coefficients from these two
-
-frequency indices.
-
-And here I plot them, so let's see what this figure looks like.
-
-OK, so here we see two Fourier coefficients. This is the complex plane -- the real axis and the imaginary
-
-axis.
-
-And these are complex dot products.
-
-These are the Fourier coefficients from two frequencies.
-
-Now, the two frequencies are not labeled.
-
-One of these is four and one of these is four point five hertz.
-
-I will let you guess, based on this plot, which coefficient is four and which coefficient is 4.5.
-
-The point is that the larger the magnitude of the dot product, which here means the further away from
-
-the origin, the more similar the signal is to the sine wave at that frequency.
-
-So if the dot product were really close to the origin like this, then it would mean that the signal
-
-and the sine wave at this frequency.
-
-Are close to orthogonal, which means that the signal looks nothing like the sine wave at that frequency.
-
-On the other hand, the exact phase relationship between the signal and the sine wave is usually not
-
-something that we're very interested in.
-
-That's why it's much more common to ignore the phases and only show the magnitudes, which is the distance
-
-away from the origin.
-
-So this dot could be over here or it could be here or it could be here, and that would not affect the
-
-height of this point here.
-
-Now, that's not to say that these phase angles are unimportant.
-
-The phase values are crucial for applying the inverse Fourier transform.
-
-And you will see this in the section on Inverse Fourier transforms.
-
-In this video, I showed you how the discrete time Fourier transform works. It works by computing the dot
-
-product between the signal and a series of complex sine waves at different frequencies.
-
-There are many important details and subtleties packed into the code that I just showed you.
-
-And you need to understand all those details in order to really understand the Fourier transform.
-
-But in this video, I wanted to show you how the Fourier Transform is implemented
-
-using a for loop. Explaining all the important subtleties and details piece by piece is the goal of
-
-basically the rest of this course.
+The discrete time Fourier transform works by computing the complex dot product
+between the signal and a series of complex sine waves at different frequencies.
 
 ```{python}
 ## plot two Fourier coefficients
