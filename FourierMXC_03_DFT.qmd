@@ -18,7 +18,8 @@ create a complex sine wave with the same length as the signal, and a frequency
 defined as $i-1$. Then, calculate the dot product between the wave and the
 signal. The result is called a **Fourier coefficient**, from which it is
 possible to extract the amplitude of the angle relative to the positive real
-axis, as well as the magnitude. The latter represents the signal amplitude for each frequency, which can be squared to obtain their powers.
+axis, as well as the magnitude. The latter represents the signal amplitude for
+each frequency, which can be squared to obtain their powers.
 
 ## Python
 
@@ -49,11 +50,13 @@ fourTime = np.array(range(pnts))/pnts
 fCoefs   = np.zeros((len(signal)),dtype=complex)
 ```
 
-For each iteration within the loop we take the $i^{th}$ frequency in `NAME` and use it to create a complex sine wave (`csw`). Once we have the signal we can
+For each iteration within the loop we take the $i^{th}$ frequency in `NAME` and
+use it to create a complex sine wave (`csw`). Once we have the signal we can
 calculate the dot product between the original sinal and the complex wave we
 just have generated.
 
-This dot product is the reason why the normalized time needs to have the same number of points as the original signal: otherwise we would not be able to
+This dot product is the reason why the normalized time needs to have the same
+number of points as the original signal: otherwise we would not be able to
 compute a valid product between the sine wave and the signal.
 
 ```{python}
@@ -71,10 +74,12 @@ for fi in range(pnts):
 
 After completing the loop we have a fourier coefficient per frequency. Now we
 can extract the magnitude, the distance of each coefficient away from the $0$.
-To obtain the signal amplitude in the units of the original signal requires multiplying the magnitude by two [SEE OTHER VIDEO].
+To obtain the signal amplitude in the units of the original signal requires
+multiplying the magnitude by two [SEE OTHER VIDEO].
 
 Now we plot the amplitude spectrum from our Fourier transform here. The time
-domain looks like [MAKE PLOT], whereas the amplitude in the frequency domain looks like:
+domain looks like [MAKE PLOT], whereas the amplitude in the frequency domain
+looks like:
 
 ```{python}
 # extract amplitudes
@@ -101,13 +106,19 @@ know is value at specific frequencies. Thus, it is more correct to use a stem
 plot or a bar plot to convey the results of a Fourier transform.
 
 We can also compare these results with the output of the fast Fourier transform
-FFT function: we apply the function, and extract the amplitudes from the Fourier coefficients. As we can see the result of the function and the loop-based
-result overlap. This is not a rigorous proof that these procedures are accurate, but the convergent results do provide evidence that we're doing the right thing here, because I think we can all agree to trust the Numpy FFT code.
+FFT function: we apply the function, and extract the amplitudes from the
+Fourier coefficients. As we can see the result of the function and the
+loop-based result overlap. This is not a rigorous proof that these procedures
+are accurate, but the convergent results do provide evidence that we're doing
+the right thing here, because I think we can all agree to trust the Numpy FFT
+code.
 
 ## Second plot
 
-The last plot was just a way to represent information contained in the fourier coefficients. Now I'm going to plot two Fourier coefficients at $4$ and $4.5$
-hertz. For this, I need to find the two indices in the frequency vector that correspond to these two frequencies [SEE NEXT VIDEO]. [...] For now, you can
+The last plot was just a way to represent information contained in the Fourier
+coefficients. Now I'm going to plot two Fourier coefficients at $4$ and $4.5$
+hertz. For this, I need to find the two indices in the frequency vector that
+correspond to these two frequencies [SEE NEXT VIDEO]. [...] For now, you can
 just assume that this is a vector that converts from frequencies in indices to
 frequencies in Hertz, given our sampling rate and given the length of time of
 the signal. Now I extract the magnitude and the angle of the coefficients and
@@ -121,7 +132,9 @@ and the sine wave at this frequency are close to orthogonal, which means that
 the signal looks nothing like the sine wave at that frequency. So $4$ is very
 close to $0$
 
-When doing this kind of analysis, usually we are not interested in the exact phase relationship between the signal and the sine wave, so generally only magnitudes are shown. However, note phase angles also important important,
+When doing this kind of analysis, usually we are not interested in the exact
+phase relationship between the signal and the sine wave, so generally only
+magnitudes are shown. However, note phase angles also important important,
 as they are crucial for applying the inverse Fourier transform.
 
 ## Summary
@@ -159,10 +172,48 @@ plt.title('Complex plane')
 plt.show()
 ```
 
-
-
-
 # VIDEO: Converting indices to frequencies
+
+The goal of this video is to learn how to transform sine wave frequencies
+from arbitrary indices into a meaningful metric like Hertz.
+
+In the previous video, I computed the Fourier transform of a signal that
+contained two sine wave components. You could confirm by looking at the graph
+that the non-zero components were at the same frequencies as the simulated
+signal.
+
+But how did the Fourier transform know that I was using units of Hertz?
+The time vector used to create these sine waves in the Fourier transform was
+normalized, these were not in units of seconds, it just went from zero to one
+(or slightly less than one) and nowhere inside the Fourier transform loop
+did I specify the sampling rate.
+
+Instead, what I did was create a meaningful vector of frequencies in Hertz,
+in a line of code that looked like this, and this was done after the Fourier
+transform was complete.
+
+`hz = np.linspace(0, srate/2, np.floor(pnts/2) + 1)`
+
+So what does this line mean and why does it correctly convert arbitrary indices
+into a meaningful vector of Hertz?
+
+That is the main topic of this video.
+
+In the process, you will also learn about the Nyquist frequency, which defines the fastest frequency in a signal that you can measure.
+
+## Pyhon
+
+Here we have a loop that is very similar to the Fourier transform: the time
+vector, the loop over points, and the complex sine wave are all in here, but
+there's no signal, and there's no product.
+
+Formally, this is not formally a Fourier transform. However, the complex sine
+wave is the same one that is used for the transform. Visualizing it will allow
+us to examine its properties.
+
+Within the loop, the frequency of the sine wave is defined by the looping
+index minus one. Then, we just plot the real and imaginary parts of the
+complex sine wave, cosine and sine, respectively.
 
 
 ```{python}
@@ -183,6 +234,132 @@ for fi in range(pnts):
 
 plt.show()
 ```
+
+
+The plot represent the real and the imaginary part of the complex sine wave
+for each step in the loop. When the index is one, the complex sine wave is constructed using a frequency of `fi - 1`, which actually means $0$ for the
+first iteration. Then the exponent is $0$, and we have $e^{0}$, so the real
+part is just one: a flat line. It may not look as a sine wave, but it is: a
+wave with a frequency of $0$. It is the average value of all the data points
+in the signal, capturing any global offsets in the signal. It is called the
+DC component, or DC Offset, where DC stands for Direct Current.
+
+~~I'll show several examples and discuss this more detail in a separate video.~~
+
+But for now, the important thing to know is that the first frequency in the Fourier transform is the
+
+zero frequency, which is a sine wave of a flat line.
+
+So zero frequency in any units is still zero, so we might as well call this zero hertz.
+
+Here you can see the frequency is getting faster and faster, so the sine waves are going faster and
+
+faster.
+
+I'm actually now going to switch back to the slides and we'll come back to Matlab in a few minutes.
+
+So as the sine waves get faster with respect to the sampling rate,
+
+The number of measurement points per cycle decreases, and eventually we get to a situation like this,
+
+where we have a sine wave that's fluctuating so quickly, we only have two measurement points per cycle,
+
+one corresponding to the peak and one corresponding to the trough.
+
+If this sine wave were going any faster, or if the measurement samples were any slower, it would not
+
+be possible to measure this sine wave accurately. That would produce something called aliasing.
+
+And I'm going to have a separate video that's all about this topic: aliasing and the implications of
+
+aliasing.
+
+Here you can see that even if you have two measurement points per cycle, it's not just any two arbitrary
+
+points.
+
+The points have to be appropriately placed along the sine wave in order to capture these fluctuations.
+
+So you can think of 2 points per sample more as a theoretical limit.
+
+It's important to realize that the density of the sampling here is defined by the sampling rate of the
+
+data, so therefore the fastest frequency that you can measure is one half of the sampling rate, which
+
+corresponds to two measurement points per cycle.
+
+This is also called the Nyquist Frequency and is defined as one half of the sampling rate.
+
+So if you have measurement samples every millisecond, that corresponds to a 1000 hertz or one kilohertz
+
+sampling rate, and then the Nyquist frequency would be 500 hertz.
+
+Now we can see this in more detail in Matlab. So here these sine waves in the Fourier transform are
+
+getting faster and faster.
+
+Here we have the frequency index of eight, which corresponds to one half of the number of time points.
+
+So this would correspond to the Nyquist frequency here.
+
+We're actually getting sine waves that are faster than the Nyquist frequency, and these end up being
+
+aliased into lower frequencies.
+
+Now, these frequencies are called the negative frequencies, and that is the topic of a separate video.
+
+Each positive frequency has a corresponding negative frequency, and it's interesting to note that the
+
+real part of the complex sine waves for the positive frequencies match the real part of the complex
+
+sine waves for the negative frequencies, and the imaginary part of the complex sine waves are shifted
+
+by minus pi.
+
+Again, I will talk more about that in a subsequent video.
+
+The point here is that we only interpret the frequencies between and including Zero and Nyquist.
+
+That gives us a total of N over two plus one frequencies that are evenly spaced between zero and Nyquist.
+
+So the N/2+1 comes from N/2 positive frequencies starting here, plus one extra
+
+for the DC and that starts here.
+
+So for this reason, in order to convert from arbitrary indices that you get here resulting from the
+
+looping index of the Fourier transform into a vector of frequencies in Hertz, you generate a vector
+
+that starts from zero and ends at the Nyquist frequency, and it takes N/2+1 steps to go
+
+between them.
+
+And that's what you see in the code that I showed in the previous video.
+
+Let's see... that was here.
+
+So I specify a vector of hertz that goes from zero to the Nyquist frequency, which is defined by the
+
+sampling rate divided by two.
+
+And here is N/2+1.
+
+So we have N/2+1 frequencies between just above zero and Nyquist.
+
+And then we add one additional frequency for the zero hertz, or the DC component.
+
+So in this video, I showed you how to convert from arbitrary indices into meaningful units of the data
+
+sampling rate.
+
+I also explained in a little more detail about the frequencies and the complex signals that are used
+
+in the Fourier transform.
+
+In the next video, I'll talk more about these mysterious positive and negative frequencies.
+
+
+
 
 # VIDEO: Converting indices to frequencies, part 2
 
