@@ -251,6 +251,99 @@ included to account for frequency $0$, the DC component.
 
 # Converting indices to frequencies
 
+When it comes to implementing that theory in code, with discretization and a
+finite number of numbers, it is worthwhile to slow down and explain what's
+really going on with the frequencies vector.
+
+So, the frequencies go from $0$, or DC, to Nyquist, the sampling rate divided
+by two, in $(n/2)+1$ steps. However, when we work with a finite number of
+numbers, things get a little bit more complicated.
+
+Theoretically, we would need to add an adjustment factor to the higher
+frequency
+
+Imagine we have an amplitude/power spectrum, going from DC to Nyquist over
+$(n/2)+1$ frequencies. However, past Nyquist there is another side of the
+spectrum: the negative frequencies. There are only $n/2$ samples for these, because the positive and negative $0$ are the same.
+
+So now let's imagine a signal that is 10 points long ($n=10$). Then we would
+need $n/2$ points for each side, plus one, for the DC component: 11 frequencies for a ten point signal.
+
+That... doesn't make sense, we should have ten frequencies for a ten point
+signal.
+
+What is actually happening is that the positive and negative frequencies
+overlap at Nyquist, with both $n/2$ sharing the point, so we have to subtract
+one. That gives us $(n/2)+1$ for the positive frequencies, $n/2$ for the
+negative ones, and $-1$ for the overlap. The result is $10$ frequencies for a
+$10$ point signal.
+
+What does happen when we have an odd number of points? If $n=11$, we would have
+$5.5$ numbers between two boundaries. That is not possible, so we round down
+(floor division). Then, we have 5 points for the positive frequencies, 5 for
+the negative ones, plus one for the DC component. However, positive and
+negative frequencies overlap at Nyquist! so the result would be $10$
+frequencies for an eleven point signal. As we need both counts to match, it is
+necessary to make some changes.
+
+What we do is space the $5$ frequencies so the last point of the positive
+frequencies, and the first one in the negative ones are slightly below, and
+slightly above of Nyquist. That removes the overlap, so now we have $n$
+frequencies for $n$ data points: $10+1$. This remains valid because we only
+reconstruct frequencies not reaching the Nyquist frequency
+
+we add a corrective factor to get us a little bit below Nyquist, and ensure we
+have $n$ frequencies for $n$ time points. What is the value of this factor?
+
+For an even number of points we go up to the Nyquist frequency as defined by
+the sampling rate.
+
+$$
+Nyq = \frac{srate}{2}
+$$
+
+For an odd number of point $Nyq^{*}$ indicates the highest frequency we can
+measure in with our odd count, which includes a corrective factor
+
+$$
+Nyq^{*} = \frac{srate}{2} \frac{n-1}{n}
+$$
+
+When the number of points is very large the correction factor only makes a
+small difference, whereas with a small number of points it can have a big
+impact. For example, with $n=5$, the correction factor is $(5-1)/5=0.8$,
+meaning the frequency only reaches $80\%$ of the Nyquist. The loss in precision
+induced by the correction factor is on the order of magnitude of $1/n$. So if
+you have a signal with with a million data points and you ignore this
+corrective factor, your frequencies will be off by $1/10^{6}$, a very small
+amount. This means many people just ignore this corrective term because in
+practice this level of precision is not required, and there are other sources
+of error.
+
+## Python
+
+In this case is not
+necessary to create the signal, we calculate the maximum frequency from the
+sampling rate and a number of data points. We create two frequency vectors,
+both with $(n/2)+1$ entries. The first frequencies vector is hard-coded to 
+reach the Nyquist frequency, whereas the second only goes up to `topfreq`. 
+How `topfreq` is defined depends on whether the remainder of $n/2$ is zero
+(even) or not (odd).
+
+If it is an even number, the top frequency is the Nyquist frequency, otherwise
+is Nyquist times the corrective factor $(n-1)/n$. Then we take some arbitrary
+frequency index and print. 
+
+~~The $36^{th}$ frequency, for this sampling rate and this number of time points,~~
+
+With an even number of points ($n=100$) the element we printed is the same
+for both vectors. With an odd number points (n=1201) the print is similar, for
+the first significant digits, and then differ digits.
+
+So they're both twenty nine point one, twenty nine point one, and then they
+start to differ by a negligible amount for many applications using a large
+number of data points.
+
 ```{python}
 ## code from the slides
 
