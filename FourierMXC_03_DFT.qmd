@@ -185,7 +185,7 @@ after the Fourier transform was complete, using the following line:
 It is related to the Nyquist frequency, the highest frequency in a signal that
 can be measured.
 
-## Python
+## Python (a)
 
 Visualizing the complex sine waves generated within the loop will help us
 to understand its properties. For each iteration, the frequency of the wave is defined by defined by the looping index minus one (`fi - 1`). For each
@@ -214,134 +214,44 @@ plt.show()
 In the first panel, the index is $1$, and thus, the frequency and the exponent
 are both is $0$ in the first iteration, so the result is $e^{0}$, a flat line
 placed at height $1$. This seems counterintuitive, bit it makes complete sense:
-it is a wave with a frequency of $0$, representing the average value of all the data points in the signal (global offsets). It is called the DC component, or
-DC Offset, where DC stands for Direct Current.
-
-~~I'll show several examples and discuss this more detail in a separate video.~~
-
-But for now, the important thing to know is that the first frequency in the Fourier transform is the
-
-zero frequency, which is a sine wave of a flat line.
-
-So zero frequency in any units is still zero, so we might as well call this zero hertz.
-
-Here you can see the frequency is getting faster and faster, so the sine waves are going faster and
-
-faster.
-
-I'm actually now going to switch back to the slides and we'll come back to Matlab in a few minutes.
-
-So as the sine waves get faster with respect to the sampling rate,
-
-The number of measurement points per cycle decreases, and eventually we get to a situation like this,
-
-where we have a sine wave that's fluctuating so quickly, we only have two measurement points per cycle,
-
-one corresponding to the peak and one corresponding to the trough.
-
-If this sine wave were going any faster, or if the measurement samples were any slower, it would not
-
-be possible to measure this sine wave accurately. That would produce something called aliasing.
-
-And I'm going to have a separate video that's all about this topic: aliasing and the implications of
-
-aliasing.
-
-Here you can see that even if you have two measurement points per cycle, it's not just any two arbitrary
-
-points.
-
-The points have to be appropriately placed along the sine wave in order to capture these fluctuations.
-
-So you can think of 2 points per sample more as a theoretical limit.
-
-It's important to realize that the density of the sampling here is defined by the sampling rate of the
-
-data, so therefore the fastest frequency that you can measure is one half of the sampling rate, which
-
-corresponds to two measurement points per cycle.
-
-This is also called the Nyquist Frequency and is defined as one half of the sampling rate.
-
-So if you have measurement samples every millisecond, that corresponds to a 1000 hertz or one kilohertz
-
-sampling rate, and then the Nyquist frequency would be 500 hertz.
-
-Now we can see this in more detail in Matlab. So here these sine waves in the Fourier transform are
-
-getting faster and faster.
-
-Here we have the frequency index of eight, which corresponds to one half of the number of time points.
-
-So this would correspond to the Nyquist frequency here.
-
-We're actually getting sine waves that are faster than the Nyquist frequency, and these end up being
-
-aliased into lower frequencies.
-
-Now, these frequencies are called the negative frequencies, and that is the topic of a separate video.
-
-Each positive frequency has a corresponding negative frequency, and it's interesting to note that the
-
-real part of the complex sine waves for the positive frequencies match the real part of the complex
-
-sine waves for the negative frequencies, and the imaginary part of the complex sine waves are shifted
-
-by minus pi.
-
-Again, I will talk more about that in a subsequent video.
-
-The point here is that we only interpret the frequencies between and including Zero and Nyquist.
-
-That gives us a total of N over two plus one frequencies that are evenly spaced between zero and Nyquist.
-
-So the N/2+1 comes from N/2 positive frequencies starting here, plus one extra
-
-for the DC and that starts here.
-
-So for this reason, in order to convert from arbitrary indices that you get here resulting from the
-
-looping index of the Fourier transform into a vector of frequencies in Hertz, you generate a vector
-
-that starts from zero and ends at the Nyquist frequency, and it takes N/2+1 steps to go
-
-between them.
-
-And that's what you see in the code that I showed in the previous video.
-
-Let's see... that was here.
-
-So I specify a vector of hertz that goes from zero to the Nyquist frequency, which is defined by the
-
-sampling rate divided by two.
-
-And here is N/2+1.
-
-So we have N/2+1 frequencies between just above zero and Nyquist.
-
-And then we add one additional frequency for the zero hertz, or the DC component.
-
-So in this video, I showed you how to convert from arbitrary indices into meaningful units of the data
-
-sampling rate.
-
-I also explained in a little more detail about the frequencies and the complex signals that are used
-
-in the Fourier transform.
-
-In the next video, I'll talk more about these mysterious positive and negative frequencies.
-
-
-
-
-# VIDEO: Converting indices to frequencies, part 2
-
----
-
-
-
-
-```python
+it is a wave with a frequency of $0$ Hz, representing the average value of all
+he data points in the signal (global offsets). It is called the DC component,
+or DC Offset, where DC stands for Direct Current.
+
+## Slides
+
+Past the first pane the frequency grows higher and higher, with more cycles per unit of time. If the sampling rate remains the same, the signal eventually
+reaches such a high frequency that cannot be accurately described by the amount
+of points we take. This point is reached when we take just two samples per
+cycle, where the samples would need to be placed on the peaks and troughs to
+properly capture the fluctuations. If the wave fluctuated any faster, or if
+the sampling was slower we would start to see aliasing effects [SEE CHAPTER].
+~~2 points per sample is more of a theoretical limit~~.
+
+The fastest/highest frequency that can be measured is called the Nyquist
+Frequency, and corresponds to one half of the sampling rate, corresponding to
+two measurements per cycle. For example, if you have measurement samples every
+millisecond, that corresponds (1000 Hz), the Nyquist frequency would be
+500 Hz.
+
+## Python (b)
+
+In our plot we reach the Nyquist frequency on the $8^{th}$ frequency index, 
+half of the number of time points. Past that point we get sine waves that are
+faster, and end up aliased into lower frequencies. These are called negative
+frequencies [SEE VIDEO].
+
+Each positive frequency has a corresponding negative frequency. The real part
+of the positive matches the real part of the negative frequencies, whereas the
+imaginary parts are shifted by $-\pi$ [SEE VIDEO].
+
+We only interpret the frequencies between $0$ and and Nyquist, a total of
+$(n/2) + 1$ points between those two frequencies (both inclusive). The $+1$ is
+included to account for frequency $0$, the DC component.
+
+# Converting indices to frequencies
+
+```{python}
 ## code from the slides
 
 srate = 1000
@@ -359,7 +269,6 @@ hz2 = np.linspace(0,topfreq,np.floor(npnts/2+1).astype(int))
 # some arbitary frequency to show
 n = 16
 print('%.9f\n%.9f'%(hz1[n],hz2[n]))
-
 ```
 
 # VIDEO: Shortcut: Converting indices to frequencies
