@@ -172,54 +172,30 @@ plt.title('Complex plane')
 plt.show()
 ```
 
-# VIDEO: Converting indices to frequencies
+# Converting indices to frequencies
 
-The goal of this video is to learn how to transform sine wave frequencies
-from arbitrary indices into a meaningful metric like Hertz.
-
-In the previous video, I computed the Fourier transform of a signal that
-contained two sine wave components. You could confirm by looking at the graph
-that the non-zero components were at the same frequencies as the simulated
-signal.
-
-But how did the Fourier transform know that I was using units of Hertz?
-The time vector used to create these sine waves in the Fourier transform was
-normalized, these were not in units of seconds, it just went from zero to one
-(or slightly less than one) and nowhere inside the Fourier transform loop
-did I specify the sampling rate.
-
-Instead, what I did was create a meaningful vector of frequencies in Hertz,
-in a line of code that looked like this, and this was done after the Fourier
-transform was complete.
+When we calculated the transform... How it was established the output would be
+in units of Hertz? The time vector was normalized, ranging from $0$ to
+$\approx 1$, which is not units of seconds. The sampling rate was not specified
+was not specified within the loop either. The frequency vector was created
+after the Fourier transform was complete, using the following line:
 
 `hz = np.linspace(0, srate/2, np.floor(pnts/2) + 1)`
 
-So what does this line mean and why does it correctly convert arbitrary indices
-into a meaningful vector of Hertz?
+It is related to the Nyquist frequency, the highest frequency in a signal that
+can be measured.
 
-That is the main topic of this video.
+## Python
 
-In the process, you will also learn about the Nyquist frequency, which defines the fastest frequency in a signal that you can measure.
-
-## Pyhon
-
-Here we have a loop that is very similar to the Fourier transform: the time
-vector, the loop over points, and the complex sine wave are all in here, but
-there's no signal, and there's no product.
-
-Formally, this is not formally a Fourier transform. However, the complex sine
-wave is the same one that is used for the transform. Visualizing it will allow
-us to examine its properties.
-
-Within the loop, the frequency of the sine wave is defined by the looping
-index minus one. Then, we just plot the real and imaginary parts of the
-complex sine wave, cosine and sine, respectively.
-
+Visualizing the complex sine waves generated within the loop will help us
+to understand its properties. For each iteration, the frequency of the wave is defined by defined by the looping index minus one (`fi - 1`). For each
+iteration of the loop, we plot the real and imaginary parts of wave, cosine and
+sine, respectively.
 
 ```{python}
 
 pnts     = 16 # number of time points
-fourTime = np.array(range(pnts))/pnts
+fourTime = np.arange(pnts)/pnts
 
 for fi in range(pnts):
     # create complex sine wave
@@ -235,14 +211,11 @@ for fi in range(pnts):
 plt.show()
 ```
 
-
-The plot represent the real and the imaginary part of the complex sine wave
-for each step in the loop. When the index is one, the complex sine wave is constructed using a frequency of `fi - 1`, which actually means $0$ for the
-first iteration. Then the exponent is $0$, and we have $e^{0}$, so the real
-part is just one: a flat line. It may not look as a sine wave, but it is: a
-wave with a frequency of $0$. It is the average value of all the data points
-in the signal, capturing any global offsets in the signal. It is called the
-DC component, or DC Offset, where DC stands for Direct Current.
+In the first panel, the index is $1$, and thus, the frequency and the exponent
+are both is $0$ in the first iteration, so the result is $e^{0}$, a flat line
+placed at height $1$. This seems counterintuitive, bit it makes complete sense:
+it is a wave with a frequency of $0$, representing the average value of all the data points in the signal (global offsets). It is called the DC component, or
+DC Offset, where DC stands for Direct Current.
 
 ~~I'll show several examples and discuss this more detail in a separate video.~~
 
