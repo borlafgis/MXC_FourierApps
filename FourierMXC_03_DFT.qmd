@@ -364,7 +364,7 @@ n = 16
 print('%.9f\n%.9f'%(hz1[n],hz2[n]))
 ```
 
-# VIDEO: Shortcut: Converting indices to frequencies
+# A shortcut for converting indices to frequencies
 
 
 
@@ -401,6 +401,50 @@ plt.show()
 
 ```
 
+Here we will learn a shortcut for converting indices to meaningful units (Hz).
+Formally, frequencies should be defined by going from $0$ to Nyquist. As a
+shortcut, it is possible to define the frequencies by taking the same number
+of samples as time points $(n)$ ranging between $0$ and the sampling rate
+(both inclusive). This is valid under the Nyquist frequency and involves a lot
+less typing.
+
+The accuracy of this shortcut depends on whether the signal has an even or odd
+number of points. That's why we define two frequency vectors `hz1`and `hz2`,
+with lengths of $n+1$ and $n$, respectively.
+
+The accuracy is evaluated by
+I'm going to create a pure sine wave with a frequency of 15 hertz.
+Then I define a time vector that goes from $0$ to sampling rate minus one
+divided by the sampling rate over an odd number of points.
+
+Now we can confirm the accuracy by computing the power spectrum and plotting
+it.
+
+[...] I'm just taking the fft of the signal, but plotting twice, once using
+`hz1`, and using `hz2`. For an odd number data points, going from ¿one? to the
+sampling rate in $n$ points gives us an accurate result (15 Hz), whereas the
+result of the other is not correct. With an even nuber of points these two
+swap places, wit the vector with $n+1$ data points giving the correct result.
+
+The frequency resolution depends on the number of time points. If we have a
+longer signal (5 seconds instead of just one), we notice the distance between
+both values now is very small
+
+If you want to get your code to be really precise, then it is important to take
+a moment and meticulously consider whether your signal is going to be an even length or an odd length, and then apply a correction factor [SEE PREVIOUS].
+If you don't really care about that level of precision, an/or if you have a
+relatively long signal, then you can actually just write the frequencies
+vector you can create the frequency vector using the shortcut.
+
+Why would I do something like this?
+
+Imagine we get some data, with some sort of problem I can't quite figure out.
+Going over the "proper" procedure takes quite a bit of time and consideration,
+but using this shortcut directly shows the power spectrum in just a line.
+However, it is important to remember the Nyquist frequency is midway within
+the plot. Frequencies below that point are accurate, whereas the rest are not
+(the sampling rate is sufficient to reconstruct such high frequencies). It is
+advisable set the range of the x axis to 0 to Nyquist.
 
 ```python
 ## Case 2: EVEN number of data points, N+1 is correct
@@ -546,12 +590,7 @@ plt.legend()
 plt.show()
 ```
 
-
----
-# VIDEO: Scaling Fourier coefficients
----
-
-
+# Scaling Fourier coefficients
 
 ```python
 ## incorrect amplitude units without normalizations
@@ -586,9 +625,7 @@ plt.show()
 ```
 
 
----
 # VIDEO: Phase (this is the code used to generate the plots in the video)
----
 
 
 
@@ -665,9 +702,7 @@ plt.show()
 ```
 
 
----
 # VIDEO: Averaging Fourier coefficients
----
 
 
 
@@ -721,9 +756,7 @@ plt.show()
 ```
 
 
----
 # VIDEO: The DC coefficient
----
 
 
 
@@ -760,11 +793,7 @@ plt.show()
 
 ```
 
-
----
 # VIDEO: Amplitude spectrum vs. power spectrum
----
-
 
 
 ```python
