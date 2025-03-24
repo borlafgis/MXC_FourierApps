@@ -9,7 +9,7 @@ import random
 from mpl_toolkits.mplot3d import Axes3D
 ```
 
-## the DFT works
+## How it works
 
 ### Pseudocode for the DFT
 
@@ -21,7 +21,7 @@ possible to extract the amplitude of the angle relative to the positive real
 axis, as well as the magnitude. The latter represents the signal amplitude for
 each frequency, which can be squared to obtain their powers.
 
-## Python
+### Python
 
 The first step is to simulate a signal as the sum two sine waves, one at $4$
 hertz, with an amplitude of $2.5$ and the another other at $6.5$ hertz, with
@@ -113,7 +113,7 @@ are accurate, but the convergent results do provide evidence that we're doing
 the right thing here, because I think we can all agree to trust the Numpy FFT
 code.
 
-## Second plot
+### Second plot
 
 The last plot was just a way to represent information contained in the Fourier
 coefficients. Now I'm going to plot two Fourier coefficients at $4$ and $4.5$
@@ -137,7 +137,7 @@ phase relationship between the signal and the sine wave, so generally only
 magnitudes are shown. However, note phase angles also important important,
 as they are crucial for applying the inverse Fourier transform.
 
-## Summary
+### Summary
 
 The discrete time Fourier transform works by computing the complex dot product
 between the signal and a series of complex sine waves at different frequencies.
@@ -172,7 +172,7 @@ plt.title('Complex plane')
 plt.show()
 ```
 
-# Converting indices to frequencies
+## Converting indices to frequencies (1)
 
 When we calculated the transform... How it was established the output would be
 in units of Hertz? The time vector was normalized, ranging from $0$ to
@@ -185,7 +185,7 @@ after the Fourier transform was complete, using the following line:
 It is related to the Nyquist frequency, the highest frequency in a signal that
 can be measured.
 
-## Python (a)
+### Python (a)
 
 Visualizing the complex sine waves generated within the loop will help us
 to understand its properties. For each iteration, the frequency of the wave is defined by defined by the looping index minus one (`fi - 1`). For each
@@ -193,22 +193,24 @@ iteration of the loop, we plot the real and imaginary parts of wave, cosine and
 sine, respectively.
 
 ```{python}
-
 pnts     = 16 # number of time points
 fourTime = np.arange(pnts)/pnts
 
-for fi in range(pnts):
+side = np.sqrt(pnts).astype(int)
+fig = plt.figure()
+panels = fig.subplots(side, side, sharex=True, sharey=True)
+
+for fi, ax in enumerate(panels.flat):
+
     # create complex sine wave
     csw = np.exp( -1j*2*np.pi*fi*fourTime )
     
     # and plot it
-    
-    loc = np.unravel_index(fi,[4, 4],'F')
-    plt.subplot2grid((4,4),(loc[1],loc[0]))
-    plt.plot(fourTime,np.real(csw))
-    plt.plot(fourTime,np.imag(csw))
+    ax.set_title(f"$f=" + str(fi) + "$")
+    ax.plot(fourTime,np.real(csw))
+    ax.plot(fourTime,np.imag(csw))
 
-plt.show()
+fig.tight_layout()
 ```
 
 In the first panel, the index is $1$, and thus, the frequency and the exponent
@@ -218,7 +220,7 @@ it is a wave with a frequency of $0$ Hz, representing the average value of all
 he data points in the signal (global offsets). It is called the DC component,
 or DC Offset, where DC stands for Direct Current.
 
-## Slides
+### Slides
 
 Past the first pane the frequency grows higher and higher, with more cycles per unit of time. If the sampling rate remains the same, the signal eventually
 reaches such a high frequency that cannot be accurately described by the amount
@@ -234,7 +236,7 @@ two measurements per cycle. For example, if you have measurement samples every
 millisecond, that corresponds (1000 Hz), the Nyquist frequency would be
 500 Hz.
 
-## Python (b)
+### Python (b)
 
 In our plot we reach the Nyquist frequency on the $8^{th}$ frequency index, 
 half of the number of time points. Past that point we get sine waves that are
@@ -249,7 +251,7 @@ We only interpret the frequencies between $0$ and and Nyquist, a total of
 $(n/2) + 1$ points between those two frequencies (both inclusive). The $+1$ is
 included to account for frequency $0$, the DC component.
 
-# Converting indices to frequencies
+## Converting indices to frequencies (2)
 
 When it comes to implementing that theory in code, with discretization and a
 finite number of numbers, it is worthwhile to slow down and explain what's
@@ -366,41 +368,6 @@ print('%.9f\n%.9f'%(hz1[n],hz2[n]))
 
 # A shortcut for converting indices to frequencies
 
-
-
-```python
-## Case 1: ODD number of data points, N is correct
-
-# create the signal
-srate = 1000
-time  = np.arange(0,srate+1)/srate
-npnts = len(time)
-
-# Notice: A simple 15-Hz sine wave!
-signal = np.sin(15*2*np.pi*time)
-
-# its amplitude spectrum
-signalX = 2*np.abs(scipy.fftpack.fft(signal)) / len(signal)
-
-# frequencies vectors
-hz1 = np.linspace(0,srate,npnts+1)
-hz2 = np.linspace(0,srate,npnts)
-
-
-# plot it
-fig = plt.subplots(1,figsize=(10,5))
-plt.plot(hz1[:npnts],signalX,'bo',label='N+1')
-plt.plot(hz2,signalX,'rs',label='N')
-plt.xlim([14.9,15.1])
-plt.ylim([.99,1.01])
-plt.legend()
-plt.xlabel('Frequency (Hz)')
-plt.title(str(len(time)) + ' points long')
-plt.ylabel('Amplitude')
-plt.show()
-
-```
-
 Here we will learn a shortcut for converting indices to meaningful units (Hz).
 Formally, frequencies should be defined by going from $0$ to Nyquist. As a
 shortcut, it is possible to define the frequencies by taking the same number
@@ -421,10 +388,55 @@ Now we can confirm the accuracy by computing the power spectrum and plotting
 it.
 
 [...] I'm just taking the fft of the signal, but plotting twice, once using
-`hz1`, and using `hz2`. For an odd number data points, going from ¿one? to the
+`hz1`, and using `hz2`.
+
+```{python}
+def plot_difference(max_time, offset, srate=1000, freq=15):
+
+    time  = np.arange(0, max_time)/srate
+    npnts = len(time)
+
+    # Notice: A simple 15-Hz sine wave!
+    signal = np.sin(freq * 2 * np.pi * time)
+
+    # its amplitude spectrum
+    amplitude = 2*np.abs(scipy.fftpack.fft(signal)) / len(signal)
+
+    # frequencies vectors
+    hz1 = np.linspace(0, srate, npnts + 1)
+    hz2 = np.linspace(0, srate, npnts)
+
+    # plot it
+    fig, ax = plt.subplots(1) #,figsize=(10,5)
+    fmt1 = {"markerfmt": "bo", "linefmt": "b", "basefmt": "k", "label": "N+1"}
+    fmt2 = {"markerfmt": "rs", "linefmt": "r", "basefmt": "k", "label": "N"}
+    ax.stem(hz1[:npnts], amplitude, **fmt1)
+    ax.stem(hz2,amplitude,**fmt2)
+    ax.legend(loc='upper right')
+    ax.set_title(str(len(time)) + ' points long')
+    ax.set_ylabel('Amplitude')
+    ax.set_ylim(bottom=0)
+    ax.set_xlim(freq - offset, freq + offset)
+    ax.set_xlabel('Frequency (Hz)')
+    return fig, ax
+```
+
+For an odd number data points, going from ¿one? to the
 sampling rate in $n$ points gives us an accurate result (15 Hz), whereas the
-result of the other is not correct. With an even nuber of points these two
+result of the other is not correct.
+
+```{python}
+## Case 1: ODD number of data points, N is correct
+plot_difference(1000 + 1, offset=.1);
+```
+
+With an even nuber of points these two
 swap places, wit the vector with $n+1$ data points giving the correct result.
+
+```{python}
+## Case 2: EVEN number of data points, N+1 is correct
+plot_difference(1000, offset=.1);
+```
 
 The frequency resolution depends on the number of time points. If we have a
 longer signal (5 seconds instead of just one), we notice the distance between
@@ -446,71 +458,9 @@ the plot. Frequencies below that point are accurate, whereas the rest are not
 (the sampling rate is sufficient to reconstruct such high frequencies). It is
 advisable set the range of the x axis to 0 to Nyquist.
 
-```python
-## Case 2: EVEN number of data points, N+1 is correct
-
-# create the signal
-srate = 1000
-time  = np.arange(0,srate)/srate
-npnts = len(time)
-
-# Notice: A simple 15-Hz sine wave!
-signal = np.sin(15*2*np.pi*time)
-
-# its amplitude spectrum
-signalX = 2*np.abs(scipy.fftpack.fft(signal)) / len(signal)
-
-# frequencies vectors
-hz1 = np.linspace(0,srate,npnts+1)
-hz2 = np.linspace(0,srate,npnts)
-
-
-# plot it
-fig = plt.subplots(1,figsize=(10,5))
-plt.plot(hz1[:npnts],signalX,'bo',label='N+1')
-plt.plot(hz2,signalX,'rs',label='N')
-plt.xlim([14.9,15.1])
-plt.ylim([.99,1.01])
-plt.legend()
-plt.xlabel('Frequency (Hz)')
-plt.title(str(len(time)) + ' points long')
-plt.ylabel('Amplitude')
-plt.show()
-
-```
-
-
-```python
+```{python}
 ## Case 3: longer signal
-
-# create the signal
-srate = 1000
-time  = np.arange(0,5*srate)/srate
-npnts = len(time)
-
-# Notice: A simple 15-Hz sine wave!
-signal = np.sin(15*2*np.pi*time)
-
-# its amplitude spectrum
-signalX = 2*np.abs(scipy.fftpack.fft(signal)) / len(signal)
-
-# frequencies vectors
-hz1 = np.linspace(0,srate,npnts+1)
-hz2 = np.linspace(0,srate,npnts)
-
-
-# plot it
-fig = plt.subplots(1,figsize=(10,5))
-plt.plot(hz1[:npnts],signalX,'bo',label='N+1')
-plt.plot(hz2,signalX,'rs',label='N')
-plt.xlim([14.99,15.01])
-plt.ylim([.99,1.01])
-plt.legend()
-plt.xlabel('Frequency (Hz)')
-plt.title(str(len(time)) + ' points long')
-plt.ylabel('Amplitude')
-plt.show()
-
+plot_difference(5000, offset=.1);
 ```
 
 # VIDEO: Normalized time vector
