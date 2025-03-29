@@ -366,32 +366,21 @@ n = 16
 print('%.9f\n%.9f'%(hz1[n],hz2[n]))
 ```
 
-# A shortcut for converting indices to frequencies
+## A shortcut for converting indices to frequencies
 
 Here we will learn a shortcut for converting indices to meaningful units (Hz).
-Formally, frequencies should be defined by going from $0$ to Nyquist. As a
-shortcut, it is possible to define the frequencies by taking the same number
-of samples as time points $(n)$ ranging between $0$ and the sampling rate
-(both inclusive). This is valid under the Nyquist frequency and involves a lot
-less typing.
+Formally, frequencies should be defined by going from $0$ up to Nyquist. An
+useful shortcut is to go from $0$ and the sampling rate (both inclusive) in
+$n$ steps, the number of time points. This is valid for frequencies below
+Nyquist, and involves a lot less typing.
 
 The accuracy of this shortcut depends on whether the signal has an even or odd
-number of points. That's why we define two frequency vectors `hz1`and `hz2`,
-with lengths of $n+1$ and $n$, respectively.
-
-The accuracy is evaluated by
-I'm going to create a pure sine wave with a frequency of 15 hertz.
-Then I define a time vector that goes from $0$ to sampling rate minus one
-divided by the sampling rate over an odd number of points.
-
-Now we can confirm the accuracy by computing the power spectrum and plotting
-it.
-
-[...] I'm just taking the fft of the signal, but plotting twice, once using
-`hz1`, and using `hz2`.
+number of time points points. To show this we rill create a sine wave with a
+frequency of 15 hz, sampled at 1 kHz (1000 Hz) and calculating the power
+spectrum. Then it is plotted twice, using the frequency vectors `hz1`and `hz2`, with lengths of $n+1$ and $n$, respectively.
 
 ```{python}
-def plot_difference(max_time, offset, srate=1000, freq=15):
+def plot_difference(max_time, freq=15, srate=1000, offset=.1):
 
     time  = np.arange(0, max_time)/srate
     npnts = len(time)
@@ -421,47 +410,39 @@ def plot_difference(max_time, offset, srate=1000, freq=15):
     return fig, ax
 ```
 
-For an odd number data points, going from ¿one? to the
-sampling rate in $n$ points gives us an accurate result (15 Hz), whereas the
-result of the other is not correct.
+When the count of time points is odd ($1001$), the frequency vector with a
+length of $n$ points gives us an accurate result (15 Hz), whereas the result
+with the other is lower than it should be.
 
 ```{python}
 ## Case 1: ODD number of data points, N is correct
-plot_difference(1000 + 1, offset=.1);
+plot_difference(1000 + 1);
 ```
 
-With an even nuber of points these two
-swap places, wit the vector with $n+1$ data points giving the correct result.
+With an even nuber of time points points ($1000$), the frequency vector with
+$n+1$ points givie the correct result, whereas the result with the other is higher than it should be.
 
 ```{python}
 ## Case 2: EVEN number of data points, N+1 is correct
-plot_difference(1000, offset=.1);
+plot_difference(1000);
 ```
 
-The frequency resolution depends on the number of time points. If we have a
-longer signal (5 seconds instead of just one), we notice the distance between
-both values now is very small
+The frequency resolution depends on the number of time points. If we use a
+signal with a length 5 seconds instead of just one ($5000$ samples), we notice
+the result with $n$ points still is higher than it should be, but the distance
+between them is smaller. As your signal gets longer, the less relevant it is whether length of the signal is even or odd
+
+```{python}
+## Case 3: longer signal
+plot_difference(5000);
+```
 
 If you want to get your code to be really precise, then it is important to take
 a moment and meticulously consider whether your signal is going to be an even length or an odd length, and then apply a correction factor [SEE PREVIOUS].
 If you don't really care about that level of precision, an/or if you have a
 relatively long signal, then you can actually just write the frequencies
-vector you can create the frequency vector using the shortcut.
-
-Why would I do something like this?
-
-Imagine we get some data, with some sort of problem I can't quite figure out.
-Going over the "proper" procedure takes quite a bit of time and consideration,
-but using this shortcut directly shows the power spectrum in just a line.
-However, it is important to remember the Nyquist frequency is midway within
-the plot. Frequencies below that point are accurate, whereas the rest are not
-(the sampling rate is sufficient to reconstruct such high frequencies). It is
-advisable set the range of the x axis to 0 to Nyquist.
-
-```{python}
-## Case 3: longer signal
-plot_difference(5000, offset=.1);
-```
+vector you can create the frequency vector using the shortcut, and select the
+valid x range (0 to Nyquist).
 
 # VIDEO: Normalized time vector
 
