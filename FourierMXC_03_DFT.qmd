@@ -444,79 +444,105 @@ relatively long signal, then you can actually just write the frequencies
 vector you can create the frequency vector using the shortcut, and select the
 valid x range (0 to Nyquist).
 
-# VIDEO: Normalized time vector
+## Normalized time vector
 
+Now we are going to delve deeper on on the time vector used in the Fourier
+transform. For our example we will use a signal with two sine waves with
+frequencies of $4$ and $6.5$ Hz, and amplitudes of $2.5$ and $1.5$,
+respectively (see figure FIGURE).
 
-```python
+```{python}
 # create the signal
 srate  = 1000 # hz
-time   = np.arange(0,2*srate)/srate # time vector in seconds
-pnts   = len(time) # number of time points
-signal = 2.5 * np.sin( 2*np.pi*4*time ) + \
-         1.5 * np.sin( 2*np.pi*6.5*time )
-
-
-# show the original signal
-plt.plot(time,signal,'k')
-plt.xlabel('Time (s)')
-plt.ylabel('Amplitude')
-plt.title('Time domain')
-plt.show()
+time   = np.arange(0, 2 * srate)/srate # time vector in seconds
+# pnts   = len(time); print(pnts) # number of time points
+signal = 2.5 * np.sin(2 * np.pi * 4 * time) + \
+         1.5 * np.sin(2 * np.pi * 6.5 * time)
 ```
 
+To apply the Fourier transform we need to prepare a normalized time vector.
+It is made by creating a range of IDs going from $0$ to the number of
+points minus one ($n-1$). It needs to start at $0$ so the sine wave also starts
+at $0$, otherwise the angle (phase) will be shifted, even though the amplitude
+(magnitude) remains the same.
 
-```python
-# prepare the Fourier transform
-fourTime = np.arange(0,pnts)/pnts
-fCoefs   = np.zeros(len(signal),dtype=complex)
+The ID rage is normalized to range from $0$ to near-$1$ by dividing by the
+number of time points. This means that the "time" the algorithm uses is just
+the element ID depicted as a fraction of the total length. This ensures the
+algorithm can work on any regularly sampled signal without any additional
+information (e.g., sampling rate). Finally, note the last element of the
+normalized time vector is not $1$ because the first element must be $0$ to
+avoid a phase shift.
 
-for fi in range(pnts):
-    
-    # create complex sine wave
-    csw = np.exp( -1j*2*np.pi*fi*fourTime )
-    
-    # compute dot product between sine wave and signal
-    # these are called the Fourier coefficients
-    fCoefs[fi] = sum( signal*csw ) / pnts
+After the looping we receive the fourier coefficients, containing the amplitude
+and the phase. The former is the distance from the origin in the complex plane
+(magnitude), and the latter is the angle relative to the positive real axis.
 
-# extract amplitudes
-ampls = 2*abs(fCoefs)
+```{python}
+def to_amplitude(signal, shift):
+
+    # prepare the Fourier transform
+    pnts = len(signal)
+    fourTime = (np.arange(0, pnts) + shift)/pnts
+    fCoefs   = np.zeros(pnts, dtype=complex)
+
+    for fi in range(pnts):
+        
+        # create complex sine wave
+        csw = np.exp( -1j*2*np.pi*fi*fourTime )
+        
+        # compute dot product between sine wave and signal
+        # these are called the Fourier coefficients
+        fCoefs[fi] = sum( signal * csw )/pnts
+
+    # calculate the amplitudes
+    return fCoefs
 ```
 
+If we change the time vector from ranging $0 - (n-1)$ to the range $10 - (n+9)$
+(same length, last element included in both cases) the result is in the
+amplitude spectrum is the same, but not the phase spectrum.
 
-```python
+```{python}
+correct = to_amplitude(signal, shift=0)
+shifted = to_amplitude(signal, shift=10)
+
 # compute frequencies vector
-hz = np.linspace(0,srate/2,int(np.floor(pnts/2)+1))
+hz = np.linspace(0,srate/2,int(np.floor(len(correct)/2)+1))
+
+fig, panels = plt.subplots(2, 1, sharex=True)
 
 # plot amplitude
-plt.stem(hz,ampls[:len(hz)],'ks-')
+panels[0].stem(hz, 2 * abs(shifted[:len(hz)]),'rs-', label='shifted')
+panels[0].stem(hz, 2 * abs(correct[:len(hz)]),'ks-', label='correct')
+panels[0].set_title('Amplitude spectrum')
+panels[0].legend(loc='upper right')
+panels[0].set_ylim([-.01,3])
+panels[0].set_ylabel('Amplitude (a.u.)')
 
-# make plot look a bit nicer
-plt.xlim([0,10])
-plt.ylim([-.01,3])
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Amplitude (a.u.)')
-plt.title('Amplitude spectrum')
-plt.show()
+# plot angles/phase
+panels[1].stem(hz, np.angle(shifted[:len(hz)]), 'rs-', label='shifted')
+panels[1].stem(hz, np.angle(correct[:len(hz)]), 'ks-', label='correct')
+panels[1].set_title('Phase spectrum')
+panels[1].set_ylim([-np.pi,np.pi])
+panels[1].set_ylabel('Phase (rad.)')
+panels[1].set_xlim([0, 10])
+panels[1].set_xlabel('Frequency (Hz)')
 
+fig.align_ylabels()
+```
 
-# plot angles
-plt.stem(hz,np.angle(fCoefs[:len(hz)]),'ks-')
+The signals can reconstructed be reconstructed from the fourier coefficients
+using the inverse fourier transform (`scipy.fftpack.ifft`). The result in the
+time domain should be an exact match of the initial signal. However, if there
+is a phase shift the reconstructed signal also will be displaced.
 
-# make plot look a bit nicer
-plt.xlim([0,10])
-plt.ylim([-np.pi,np.pi])
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Phase (rad.)')
-plt.title('Phase spectrum')
-plt.show()
-
-
+```{python}
 # finally, plot reconstructed time series on top of original time series
-reconTS = np.real(scipy.fftpack.ifft( fCoefs ))*pnts
+reconTS = np.real(scipy.fftpack.ifft( shifted )) * len(signal)
 
-plt.plot(time,signal,'k',label='Original')
-plt.plot(time[::3],reconTS[::3],'r.',label='Reconstructed')
+plt.plot(time, signal,'k',label='Original')
+plt.plot(time[::3], reconTS[::3],'r.',label='Shifted')
 plt.legend()
 plt.show()
 ```
