@@ -547,6 +547,49 @@ plt.legend()
 plt.show()
 ```
 
+## Positive and negative frequencies
+
+The amplitudes of a real-valued signal (most of them) are split between the
+positive and the negative frequencies, with each part containing half of the
+signal's energy. Over the positive part frequency increases up to Nyquist
+($1/2$  of the sampling rate), then frequency decreases over the negative
+frequencies.
+
+The existance of these negative frequencies is explained by Euler's formula
+([and some algebra and trigonometry](https://web.archive.org/web/20130409043929/https://www.ctralie.com/PrincetonUGRAD/Tutorials/Euler/)).
+:
+
+$$
+\cos k = \frac{e^{ik} + e^{-ik}}{2}
+$$
+
+The cosine is the average of two complex exponentials. Then, if $\cos (k)$ is
+a real-valued wave, the expression becomes:
+
+$$
+\cos (2 \pi f t)
+=
+\frac{e^{i2 \pi f t} + e^{-i2 \pi f t}}{2}
+$$
+
+In order to represent the wave we need two complex exponentials, with positive
+and negative powers, which represent two complex waves whose cycles go in
+opposite directions (i.e., clockwise and counter-clockwise). These are the
+positive and the negative frequencies. The frequency increases over the former
+until reaching Nyquist, and, if the signal is real-valued, decreases over the
+negative frequencies, which mirror the positive ones.
+
+Many people just show the positive part when analyzing
+real-valued signals, because the negative part just mirrors it. However, it is
+important to note both positive and negative frequencies are necessary to fully
+reconstruct the original signal amplitude. If only the positive frequencies are
+retained, half of the amplitude of the original signal is lost
+(SECTION about Fourier coefficient normalization).
+
+See https://math.stackexchange.com/questions/525080: *"In short, negative frequencies (or indices) correspond to counter rotations. If positive frequency goes counterclockwise, then negative frequency goes clockwise."*
+
+~~Some people (hysicists) shift the power spectrum to show negative frequencies on the left, positive frequencies on the right and zero, the DC component, in the middle.~~
+
 # Scaling Fourier coefficients
 
 ```python
