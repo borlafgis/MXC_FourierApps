@@ -648,6 +648,40 @@ plt.xlim(0,10)
 plt.show()
 ```
 
+When working with the Fourier transform, you usually want to the power spectrum
+to have the same units as the signal you measured. For this, it is necessary to
+two normalization factors.
+
+*First, I'd like to demonstrate to you that the results of the Fourier transform do not have the correct units natively.*
+
+The first step is to simulate a sine wave with a frequency of 4 Hz and an
+amplitude of 2.5. This ensures we know what is the actual truth.
+
+Then we run the Fourier transform and extract the amplitudes (magnitudes) from
+the complex coeffivients.
+
+Now I compute the frequencies vector in Hertz, going from $0$ to Nyquist over
+$n$ steps, the number of points in the signal.
+
+And make a stem plot of the amplitude spectrum.
+
+The spilkes appear in the correct frequencies, but the amplitude is around
+1900, way larger than than it should be, growing larger the longer the signal
+is. This happens because the basis of the fourier transform is the dot product
+between the signal and a complex sine wave. Thus, the longer the signal is,
+the larger the dot product will grow. The result can be normalized by dividing
+by the number of points, becoming an "average" similarity between the signal
+and the sine wave, which now is not affected by the length of the data.
+
+After the first normalization the amplitude does not change with the amunt of
+data points, but seems to be exactly one half of the correct value. This
+happens because the amplitude gets split between the positive and the negative
+frequencies. We can drop the latter, as they mirror the former, but we need to
+consider we only have retained half of the energy. It is necessary to multiply
+the positive amplitudes by a factor of 2. It is important to note this is not
+fully accurate because the DC component ($0$ frequency) does not have a
+corresponding negative frequency. So, the only the amplitudes between $0$ and
+Nyquist should be doubled, but neither of these endppoints.
 
 # VIDEO: Phase (this is the code used to generate the plots in the video)
 
