@@ -454,7 +454,7 @@ respectively (see figure FIGURE).
 ```{python}
 # create the signal
 srate  = 1000 # hz
-time   = np.arange(0, 2 * srate)/srate # time vector in seconds
+time   = np.arange(0, (2 * srate) + 1)/srate # time vector in seconds
 # pnts   = len(time); print(pnts) # number of time points
 signal = 2.5 * np.sin(2 * np.pi * 4 * time) + \
          1.5 * np.sin(2 * np.pi * 6.5 * time)
@@ -479,7 +479,7 @@ and the phase. The former is the distance from the origin in the complex plane
 (magnitude), and the latter is the angle relative to the positive real axis.
 
 ```{python}
-def to_amplitude(signal, shift):
+def fourier_coefs(signal, shift):
 
     # prepare the Fourier transform
     pnts = len(signal)
@@ -504,8 +504,8 @@ If we change the time vector from ranging $0 - (n-1)$ to the range $10 - (n+9)$
 amplitude spectrum is the same, but not the phase spectrum.
 
 ```{python}
-correct = to_amplitude(signal, shift=0)
-shifted = to_amplitude(signal, shift=10)
+correct = fourier_coefs(signal, shift=0)
+shifted = fourier_coefs(signal, shift=10)
 
 # compute frequencies vector
 hz = np.linspace(0,srate/2,int(np.floor(len(correct)/2)+1))
@@ -549,11 +549,10 @@ plt.show()
 
 ## Positive and negative frequencies
 
-The amplitudes of a real-valued signal (most of them) are split between the
-positive and the negative frequencies, with each part containing half of the
-signal's energy. Over the positive part frequency increases up to Nyquist
-($1/2$  of the sampling rate), then frequency decreases over the negative
-frequencies.
+The amplitude of a real-valued signal is split between the positive and the
+negative frequencies, with each part containing half of the signal's energy.
+Over the positive part frequency increases up to Nyquist ($1/2$  of the
+sampling rate), then frequency decreases over the negative frequencies.
 
 The existance of these negative frequencies is explained by Euler's formula
 ([and some algebra and trigonometry](https://web.archive.org/web/20130409043929/https://www.ctralie.com/PrincetonUGRAD/Tutorials/Euler/)).
@@ -563,8 +562,8 @@ $$
 \cos k = \frac{e^{ik} + e^{-ik}}{2}
 $$
 
-The cosine is the average of two complex exponentials. Then, if $\cos (k)$ is
-a real-valued wave, the expression becomes:
+The cosine is the average of two complex exponentials. Then, if $\cos (k)$
+represents a real-valued wave, the expression becomes:
 
 $$
 \cos (2 \pi f t)
@@ -574,10 +573,35 @@ $$
 
 In order to represent the wave we need two complex exponentials, with positive
 and negative powers, which represent two complex waves whose cycles go in
-opposite directions (i.e., clockwise and counter-clockwise). These are the
-positive and the negative frequencies. The frequency increases over the former
-until reaching Nyquist, and, if the signal is real-valued, decreases over the
-negative frequencies, which mirror the positive ones.
+opposite directions (i.e., clockwise and counter-clockwise). Thus, if a signal
+is real-valued, the negative frequencies just mirror the positive ones.
+
+```{python}
+is_relevant = (hz > 0) & (hz < 7.5)
+
+positive_hz = hz[is_relevant]
+positive = correct[:len(hz)][is_relevant]
+
+negative_hz = positive_hz[::-1]
+negative = correct[-len(positive):]
+
+fig, panels = plt.subplots(2, 2, sharex="col", sharey='row')
+panels[1, 1].xaxis.set_inverted(True)
+
+# Titles
+panels[0, 0].set_title("Positive frequencies")
+panels[0, 1].set_title("Negative frequencies")
+
+# plot amplitude
+panels[0, 0].set_ylabel('Amplitude')
+panels[0, 0].stem(positive_hz, 2 * abs(positive),'gs-', basefmt='k')
+panels[0, 1].stem(negative_hz, 2 * abs(negative),'rs-', basefmt='k')
+
+# plot phase
+panels[1, 0].set_ylabel('Phase')
+panels[1, 0].stem(positive_hz, np.angle(positive),'gs-', basefmt='k')
+panels[1, 1].stem(negative_hz, np.angle(negative),'rs-', basefmt='k')
+```
 
 Many people just show the positive part when analyzing
 real-valued signals, because the negative part just mirrors it. However, it is
