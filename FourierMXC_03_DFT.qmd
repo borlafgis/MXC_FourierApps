@@ -616,62 +616,78 @@ See https://math.stackexchange.com/questions/525080: *"In short, negative freque
 
 # Scaling Fourier coefficients
 
-```python
+When working with the Fourier transform, you usually want to the power spectrum
+to have the same units as the signal you measured. For this, it is necessary to
+apply two normalization factors. To understand this, we will run a step by step
+example. Fist, we simulate a sine wave with a frequency of 4 Hz and an
+amplitude of 2.5 (so we know the truth), calculate the fourier coefficents,
+and plot the frequencies from $0$ to Nyquist (over $n$ steps, the data points
+in the signal).
+
+```{python}
 ## incorrect amplitude units without normalizations
 
 # create the signal
 srate  = 1000 # hz
-time   = np.arange(0.,1.5,1/srate)  # time vector in seconds
-pnts   = len(time)   # number of time points
-signal = 2.5 * np.sin( 2*np.pi*4*time )
+
+def make_signal(time):
+    return 2.5 * np.sin(2 * np.pi * 4 * time)
 
 
-# prepare the Fourier transform
-fourTime = np.array(range(pnts))/pnts
-fCoefs   = np.zeros(len(signal),dtype=complex)
+def amp_spectrum(signal, srate):
 
-for fi in range(pnts):
-    # create complex sine wave and compute dot product with signal
-    csw = np.exp( -1j*2*np.pi*fi*fourTime )
-    fCoefs[fi] = np.sum( np.multiply(signal,csw) )
+    # prepare the Fourier transform
+    pnts   = len(signal)   # number of time points
+    fourTime = np.array(range(pnts))/pnts
+    fCoefs   = np.zeros(len(signal),dtype=complex)
+
+    for fi in range(pnts):
+        # create complex sine wave and compute dot product with signal
+        csw = np.exp( -1j * 2 * np.pi * fi * fourTime )
+        fCoefs[fi] = np.sum(np.multiply(signal, csw))
+    
+    hz = np.linspace(0, srate/2, num=int(np.floor(pnts/2.) + 1))
+
+    return hz, np.abs(fCoefs)
 
 
-# extract amplitudes
-ampls = np.abs(fCoefs);
+def plot_spectrums(**kwargs):
 
-# compute frequencies vector
-hz = np.linspace(0,srate/2,num=int(math.floor(pnts/2.)+1))
+    for label, (hz, amp, color) in kwargs.items():
+        plt.stem(hz, amp[:len(hz)], color, basefmt="k", label=label)
 
-plt.stem(hz,ampls[range(len(hz))])
-plt.xlabel('Frequency (Hz)'), plt.ylabel('Amplitude (a.u.)')
-plt.xlim(0,10)
-plt.show()
+    plt.legend()
+    plt.xlabel('Frequency (Hz)'), plt.ylabel('Amplitude (a.u.)')
+    plt.xlim(0,10)
+    plt.ylim(0)
+    plt.show()
+
+
+short_signal = make_signal(time=np.arange(0., 1.5, 1/srate))
+long_signal = make_signal(time=np.arange(0., 2.0, 1/srate))
+
+short_hz, short_amp = amp_spectrum(short_signal, srate=srate)
+long_hz, long_amp = amp_spectrum(long_signal, srate=srate)
+
+plot_spectrums(
+    long=(long_hz, long_amp, "g"),
+    short=(short_hz, short_amp, "r")
+    )
 ```
 
-When working with the Fourier transform, you usually want to the power spectrum
-to have the same units as the signal you measured. For this, it is necessary to
-two normalization factors.
+The spikes appear in the correct frequencies, but the amplitude is way larger
+than than it should be. In fact, the longer the signal, larger the amplitude.
+This happens because the basis of the fourier transform is the dot product
+between the signal and a complex sine wave. Thus, more elements are summed up
+as the signal grows longer. This can be avoided by dividing by the number
+of points, normalizing for the length of the data.
 
-*First, I'd like to demonstrate to you that the results of the Fourier transform do not have the correct units natively.*
-
-The first step is to simulate a sine wave with a frequency of 4 Hz and an
-amplitude of 2.5. This ensures we know what is the actual truth.
-
-Then we run the Fourier transform and extract the amplitudes (magnitudes) from
-the complex coeffivients.
-
-Now I compute the frequencies vector in Hertz, going from $0$ to Nyquist over
-$n$ steps, the number of points in the signal.
-
-And make a stem plot of the amplitude spectrum.
-
-The spilkes appear in the correct frequencies, but the amplitude is around
-1900, way larger than than it should be, growing larger the longer the signal
-is. This happens because the basis of the fourier transform is the dot product
-between the signal and a complex sine wave. Thus, the longer the signal is,
-the larger the dot product will grow. The result can be normalized by dividing
-by the number of points, becoming an "average" similarity between the signal
-and the sine wave, which now is not affected by the length of the data.
+```{python}
+plot_spectrums(
+    long=(long_hz, long_amp/len(long_amp), "g"),
+    short=(short_hz, short_amp/len(short_amp), "r")
+    )
+```
 
 After the first normalization the amplitude does not change with the amunt of
 data points, but seems to be exactly one half of the correct value. This
@@ -682,6 +698,13 @@ the positive amplitudes by a factor of 2. It is important to note this is not
 fully accurate because the DC component ($0$ frequency) does not have a
 corresponding negative frequency. So, the only the amplitudes between $0$ and
 Nyquist should be doubled, but neither of these endppoints.
+
+```{python}
+plot_spectrums(
+    long=(long_hz, 2 * long_amp/len(long_amp), "g"),
+    short=(short_hz, 2 * short_amp/len(short_amp), "r")
+    )
+```
 
 # VIDEO: Phase (this is the code used to generate the plots in the video)
 
