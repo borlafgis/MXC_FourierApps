@@ -706,14 +706,26 @@ plot_spectrums(
     )
 ```
 
-# VIDEO: Phase (this is the code used to generate the plots in the video)
+# Interpreting phase values
+
+The phase is the angle of the vector that goes from the origin of the complex
+plane to the coordinates represented by the complex Fourier coefficient.
+It represents the value of the sine wave at time zero.
+
+[Retaining] The phase relationship between the signal and the sine wave was the
+primary reason why Fourier transform uses complex and not real-valued sine
+waves.
+
+On the [llustration] you can see two sound waves with equal amplitude, but
+different phases. When they are transformed into the frequency domain they
+have the same amplitude spectrum, but the phases are different.
 
 ```{python}
 ## same amplitude, different phase
 
 # simulation parameters
 srate = 1000
-time  = np.arange(0.,2.,1/srate)
+time  = np.arange(0.,2. + 1/srate, 1/srate)
 npnts = len(time)
 
 # generate signal
@@ -754,145 +766,46 @@ signal2phase = np.angle(signal2X[0:len(hz)])
 
 
 # plot time-domain signals
-plt.subplot2grid((3,2),(0,0))
-plt.plot(time,signal1)
+fig, panels = plt.subplots(2, 2, sharex="col", sharey="row")
 
-plt.subplot2grid((3,2),(0,1))
-plt.plot(time,signal2,'k')
+#panels[0, 0].plot(time,signal1)
+#panels[0, 1].plot(time,signal2,'k')
 
-plt.subplot2grid((3,2),(1,0))
-plt.stem(hz,signal1Amp)
-plt.xlim([0,20])
+panels[0, 0].stem(hz,signal1Amp)
+panels[0, 1].stem(hz,signal2Amp)
 
-plt.subplot2grid((3,2),(1,1))
-plt.stem(hz,signal2Amp)
-plt.xlim([0,20])
+panels[1, 0].stem(hz,signal1phase)
+panels[1, 0].set_xlim([0,20])
 
-plt.subplot2grid((3,2),(2,0))
-plt.stem(hz,signal1phase)
-plt.xlim([0,20])
+panels[1, 1].stem(hz,signal2phase)
+panels[1, 1].set_xlim([0,20])
 
-plt.subplot2grid((3,2),(2,1))
-plt.stem(hz,signal2phase)
-plt.xlim([0,20])
-
-plt.tight_layout()
-plt.show()
+fig.tight_layout()
 ```
 
-The phase is the angle of the vector that goes from the origin of the complex
-plane to the coordinates represented by the complex Fourier coefficient.
-It refers to the value of the sine wave at time zero.
+The phase spectrum is generally quite difficult to interpret visually. For
+example, if we plot a trace of electrical brain activity in the time domain,
+we can see the voltage fluctuations as the brain is processing a visual sensory
+(appears at $t = 0$). On the the frequency there are clear features on the power spectrum, whereas it is difficult to understand what is going on the phase
+spectum. That's why phase spectra rarely is plotted for real signals.
 
-You will remember from the previous section in this course that the phase relationship between the signal
+Even though phase spectrum is difficult to interpret, it defines the timing,
+making it essential to reconstruct the signal.
 
-and the sine wave was the primary limitation of using real valued sine waves, and that also provided
+Phase is independant from power, reason why normalization is not needed for the
+phase spectrum: regardeless the length of a line, the angle respective to the
+origin remains the same. However, if the length (amplitude) is zero, then the
+phase is undefined, as a line with zero length cannot have an angle. In fact,
+is difficult to estimate when the amplitude is too small. 
 
-the motivation for using complex valued sine waves in the Fourier transform.
-
-Here you see an example of two different sound waves.
-
-They have exactly the same frequency and exactly the same amplitude, but the phases differ, as you
-
-can see here.
-
-The amplitude spectrum is identical between these two sine waves, but the phase spectrum is different.
-
-So for these two signals, it's the phase spectrum that differentiates the signals, not the amplitude
-
-spectrum.
-
-On the other hand, the phase spectrum is generally quite difficult to interpret visually.
-
-Consider this example.
-
-Here is a trace of electrical brain activity.
-
-This is the time domain signal.
-
-And you can see that there are voltage fluctuations as the brain is processing a visual sensory input that
-
-appeared at time zero.
-
-When you look at the power spectrum here, you immediately see several important features of the signal.
-
-However, when you look at the phase spectrum, you really don't get a sense of what is important about
-
-the signal and what the main features are.
-
-For this reason, you will rarely see phase spectra plotted for real signals.
-
-Now, that's not to say that the phase is unimportant:
-
-Phase values are crucial for reconstructing the signal, and it's the phase values that defines the
-
-timing of the signal.
-
-It's just that the phase spectrum is difficult to interpret visually compared to the power spectrum.
-
-And the reason for this is that phase has basically nothing to do with amplitude.
-
-Consider these two Fourier coefficients in this complex plane.
-
-They both have exactly the same angle, theta, but very different amplitudes.
-
-So in these two cases, the phase is identical, meaning the phase is completely independent of power.
-
-That's also something that I discussed in a previous video, and this is why there is no need for normalization
-
-of the phase values: the angle of a line is the same, regardless of how long the line is.
-
-So you don't need to apply any normalizations to the phase the way that you do for the amplitudes.
-
-Actually, that is not entirely correct. When the amplitude is zero, then phase is undefined, because
-
-a line with zero length cannot possibly have an angle.
-
-And even for amplitude values that are not exactly zero but are really small, then the phase becomes
-
-difficult to estimate.
-
-This often happens with noisy signals or when there is noise in the measurements. To see why this is
-
-the case,
-
-imagine that the Fourier coefficient is somewhere out here, but because of some noise in the sensor measurements,
-
-the coefficient could actually be estimated anywhere in this cloud.
-
-This is like a cloud of uncertainty for estimating the Fourier coefficient.
-
-Now, for this coefficient, this level of noise isn't such a big deal.
-
-It's not so problematic.
-
-The phase value would be approximately the same anywhere in this cloud, but the same amount of noise
-
-applied to a Fourier coefficient that is much closer to zero could mean that the phase could be literally
-
-any possible value.
-
-So this is a key point: In theory,
-
-phase and power are independent,
-
-but when you are working with real measurements, particularly in the presence of noise, then there
-
-is uncertainty in estimating phase values for Fourier coefficients with small amplitudes.
-
-In this video, I spoke about how to interpret the phase values from the Fourier transform; why they're
-
-typically not shown in spectrographs; and how measurement noise can create more uncertainty in estimating
-
-phase values
-
-when the amplitude is lower. You will see another example of how to interpret the phase of the Fourier
-
-transform in the next video on averaging Fourier coefficients.
+This often happens with noisy signals or when there is noise in the measurements.
 
 
-
-
+Imagine we take two complex measurements, both with the same uncertainty (true
+value within the same margin of tolerance). In one case the amplitude is large,
+so the range of possible phase values is relatively small. On the other, the
+amplitude is small enough for the origin to be included on the uncertainty
+region, then the measurement could be valid for any phase!
 
 # VIDEO: Averaging Fourier coefficients
 
