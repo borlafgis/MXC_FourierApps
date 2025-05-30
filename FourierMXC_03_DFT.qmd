@@ -861,6 +861,170 @@ plt.show()
 ```
 
 
+The possibility of averaging Fourier coefficients has major implications for
+the kinds of analyses that can be conducted with the Fourier transform. It
+ also highlights the importance of phase for the results of the Fourier
+ transform.
+
+So imagine this [phasor] is a complex plane, where the two lines representing
+two Fourier coefficients. Both have roughly the same distance to the origin,
+So the magnitudes of these two Fourier coefficients are about the same.
+However, tehir phases are quite different.
+
+If we average the magnitudes, the result magnitude has nearly the same magnitude
+as each original line. However, then we would be ignoring the phase value. If
+we average the actual vectors, the result would point in a direction that's in
+between these two and the length would be much smaller, because of the phase
+differences between these two Fourier coefficients [see section SECTION on
+the linear algebra course].
+
+If we visualize the process, we would takie one vector and place its tail
+at the head of the other. Then, the result would be, and the line between the
+of the vector we moved, and the tail of the vector that remained in place.
+Thus, the averaged vector can be quite shorter than the input vectors if there
+is a large phase difference between the input fourier coefficients.
+
+Averaging magnitudes and averaging vectors are both correct ways to average,
+but they highlight different features of the data: the former highlights the
+average amplitude of the Fourier coefficient, whereas the latter only highlights
+of the amplitude that is phase-consistent between the Fourier coefficients.
+
+Now, let me show you how this looks in Matlab.
+
+OK, so here I am generating a signal. This is a little bit different from how I've generated signals in
+
+the past several videos. Typically I'm generating only one time series.
+
+In this case, I'm going to be generating 100 time series.
+
+They all have exactly the same sine wave component.
+
+So they all have 20 hertz sinewaves with an amplitude of one.
+
+And what differs between all of these different sine waves over these different trials is that they
+
+all have a random phase offset.
+
+So this is sine two pi f -- so 20 is the frequency -- times time, plus a phase offset of two times
+
+pi,
+
+times a number that is randomly generated between zero and one. So that means they will all have random
+
+sine wave phase offsets.
+
+OK, so let me run this code so you get a sense of what the size of this dataset looks like.
+
+So this variable data, it's a matrix of size 100 by 200.
+
+There are 200 time points and 100 trials.
+
+So there's 100 iterations of this sine wave and each sine wave has its own random phase.
+
+So in the upper plot that I'll show in a minute, I'm going to show you all of the individual time series
+
+as well as the average time series.
+
+And then I will show the amplitude spectrum.
+
+In this case, I'm extracting it via the Matlab function FFR, which computes the fast Fourier transform.
+
+I will talk more about the fast Fourier transform later in this course.
+
+But this basically gives the same outputs as the loop-based Fourier transform that you've seen before.
+
+OK, so here, this just looks like a mishmash of colors.
+
+Maybe we can zoom in here.
+
+So if I zoom in a little bit in time, you can see this looks quite pretty, it looks quite neat, but
+
+these are all the sine waves are all at 20 hertz.
+
+They all have the same amplitude, but the phases are different.
+
+And that's why you see this kind of mishmash crossing pattern.
+
+You can also see that the average of all of these sine waves is much smaller amplitude compared to the
+
+single trial sine waves.
+
+Now, let's look at the two ways of extracting the amplitudes from the spectrum. So the spectrum
+
+shown in the red lines here corresponds to the average amplitude.
+
+So what I do here is first extract the magnitudes of each Fourier coefficient.
+
+Then I scale them up by two and then I take the average.
+
+So notice I'm taking the average of the magnitudes.
+
+And here that is one.
+
+Now, in this case, the black line, the spectrum indicated by the black line, that's the average
+
+coefficient.
+
+So here I'm averaging over all the coefficients and then I'm taking the magnitude.
+
+So you can see the Matlab code for these two is almost identical.
+
+I'm just swapping the order of the magnitude and the averaging.
+
+So let me go back to the slide for a minute and show you what this corresponds to.
+
+So those two options correspond to this, so extracting the magnitude and then averaging these two magnitudes
+
+together; versus this, which is averaging the complex Fourier coefficients together and then taking
+
+the length of the average.
+
+So in this case, these two spectra are quite different.
+
+And that's because they all of the individual sine waves have randomized phase values.
+
+By the way, it looks like these are shifted here; I imposed a slight shift of plus point two. That's
+
+just to make it easier to visualize the red dots and the black dots simultaneously on this graph.
+
+They, in fact, have identical frequencies.
+
+OK, so now we can change the amount of phase randomization by, for example, setting this to be one.
+
+So now I'm generating sine waves with random phases between zero and pi, instead of between zero and
+
+two pi.
+
+And you can see the effect in the time domain: the sine waves are now more clustered in time and therefore
+
+the average sine wave has larger amplitude, and these two are approaching each other.
+
+And you can play around with this code.
+
+In fact, I encourage you to spend some time playing around with this code.
+
+We can make this a very small amount of variability.
+
+So point one times pi, and then that times some random number between zero and one.
+
+And that's going to generate very little phase jitter.
+
+And so we can zoom in here and you can see that there is some phase jitter for the different trials, the
+
+different sine waves in this data set, but they're all extremely close to each other.
+
+And therefore, in the frequency domain, the spectra are almost exactly the same for taking the average
+
+of the amplitudes versus the amplitude of the average complex Fourier coefficient.
+
+So in this video, I showed you two different ways of averaging Fourier coefficients, either averaging
+
+the coefficients in the complex domain or extracting the magnitudes -- the amplitudes -- and then averaging
+
+those. You will see an example of this applied to real data in the homework problems for the section
+
+of this course on the Fast Fourier transform.
+
 # VIDEO: The DC coefficient
 
 
