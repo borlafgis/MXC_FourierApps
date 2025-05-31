@@ -923,11 +923,49 @@ plt.title('Frequency domain')
 plt.legend()
 ```
 
-# VIDEO: The DC coefficient
+## VIDEO: The DC coefficient
+
+The DC component reflects the amplitude of a signal with zero frequency. It
+reflects the average of the entire signal because the sine wave used for the
+dot product only contains ones. Thus, when we divide by the number of points
+in the signal, we just get the mean.
+
+Note the DC component does not affect the sinusoidal components, as it captured
+by the mean offset, the zero frequency component [integrate better].
 
 
+$$
+\frac{1}{4}
+%\times
+\begin{bmatrix} 1 \\ 1 \\ 1 \\ 1 \end{bmatrix}
+%\times
+\begin{bmatrix} 3 \\ 3 \\ 2 \\ 2 \end{bmatrix}
+=
+\frac{1 \times 3 + 1 \times 3 + 1 \times 2 + 1 \times 2}{4}
+=
+2.5
+$$
 
-```python
+THe division by the point count is one of the two normalizations necessary to
+transform the Fourier coefficents into the units of the original signal.
+
+### Python
+
+First we generate a signal with a global offset of $1.5$. Then we compute the
+Fourier transform, and apply the normalization factors, dividing by the number
+of points to account for the signal length, and multiply by two to account for
+the removal of the of the negative frequency.
+
+The amplitude spectrum shows just two two frequencies with non-zero energies,
+corresponding to 0 and 4 Hz. The amplitude of the latter (2.5 Hz) matches our
+simulation, but the former is 3 Hz, twice as large than it should be (1.5 Hz).
+This is telated to the positive and negative frequencies. When we transform a
+real-valued signal to the the frequency domain, its energy is split into
+these twwo frequencies. However, the zero frequency does not have a negative
+complement. Thus, the only the frequencies past zero Hertz but smaller than
+Nyquist should be multiplied by 2.
+
+```{python}
 ## incorrect DC reconstruction without careful normalization
 
 # create the signal
@@ -947,8 +985,9 @@ for fi in range(pnts):
     fCoefs[fi] = np.sum( np.multiply(signal,csw) )
 
 
-# extract amplitudes
-ampls = 2*np.abs(fCoefs/pnts);
+# extract amplitudes, scale theby number of points and negati freq. removal
+ampls = np.abs(fCoefs/pnts);
+ampls[1:] *= 2
 
 # compute frequencies vector
 hz = np.linspace(0,srate/2,num=int(math.floor(pnts/2.)+1))
@@ -956,11 +995,9 @@ hz = np.linspace(0,srate/2,num=int(math.floor(pnts/2.)+1))
 plt.stem(hz,ampls[0:len(hz)])
 plt.xlim(-.1,10)
 plt.xlabel('Frequency (Hz)'), plt.ylabel('Amplitude (a.u.)')
-plt.show()
-
 ```
 
-# VIDEO: Amplitude spectrum vs. power spectrum
+## Amplitude spectrum vs. power spectrum
 
 
 ```python
@@ -1015,3 +1052,6 @@ plt.ylabel('Decibel power')
 
 plt.show()
 ```
+### A note about terminology of Fourier features
+
+To be added
