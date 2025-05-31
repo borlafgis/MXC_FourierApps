@@ -807,59 +807,7 @@ so the range of possible phase values is relatively small. On the other, the
 amplitude is small enough for the origin to be included on the uncertainty
 region, then the measurement could be valid for any phase!
 
-# VIDEO: Averaging Fourier coefficients
-
-
-
-```python
-# simulation parameters
-ntrials = 100
-srate   = 200 # Hz
-time    = np.arange(0,1,1/srate)
-pnts    = len(time)
-
-
-# create dataset
-data = np.zeros((ntrials,pnts))
-for triali in range(ntrials):
-    data[triali,:] = np.sin(2*np.pi*20*time + 2*np.pi*np.random.rand())
-
-# plot the data
-for i in range(ntrials):
-    plt.plot(time,data[i,:])
-plt.plot(time,np.mean(data,axis=0),'k',linewidth=3)
-plt.xlabel('Time (sec.)')
-plt.ylabel('Amplitude')
-plt.title('Time domain')
-# plt.xlim([0,.1])
-
-plt.show()
-
-```
-
-
-```python
-# get Fourier coefficients
-dataX = scipy.fftpack.fft(data,axis=1) / pnts
-hz = np.linspace(0,srate/2,int(np.floor(pnts/2)+1))
-
-# averaging option 1: complex Fourier coefficients, then magnitude
-ave1 = 2*np.abs( np.mean(dataX,axis=0) )
-
-# averaging option 2: magnitude, then complex Fourier coefficients
-ave2 = np.mean( 2*np.abs(dataX),axis=0 )
-
-# plot both amplitude spectra
-plt.stem(hz,ave1[0:len(hz)],'ks-',label='Average coefficients',use_line_collection=True)
-plt.stem(hz+.2,ave2[0:len(hz)],'ro-',label='Average amplitude',use_line_collection=True)
-plt.xlim([10,30])
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Amplitude')
-plt.title('Frequency domain')
-plt.legend()
-plt.show()
-```
-
+## Averaging Fourier coefficients
 
 The possibility of averaging Fourier coefficients has major implications for
 the kinds of analyses that can be conducted with the Fourier transform. It
@@ -889,141 +837,91 @@ but they highlight different features of the data: the former highlights the
 average amplitude of the Fourier coefficient, whereas the latter only highlights
 of the amplitude that is phase-consistent between the Fourier coefficients.
 
-Now, let me show you how this looks in Matlab.
-
-OK, so here I am generating a signal. This is a little bit different from how I've generated signals in
-
-the past several videos. Typically I'm generating only one time series.
-
-In this case, I'm going to be generating 100 time series.
-
-They all have exactly the same sine wave component.
-
-So they all have 20 hertz sinewaves with an amplitude of one.
-
-And what differs between all of these different sine waves over these different trials is that they
-
-all have a random phase offset.
-
-So this is sine two pi f -- so 20 is the frequency -- times time, plus a phase offset of two times
-
-pi,
-
-times a number that is randomly generated between zero and one. So that means they will all have random
-
-sine wave phase offsets.
-
-OK, so let me run this code so you get a sense of what the size of this dataset looks like.
-
-So this variable data, it's a matrix of size 100 by 200.
-
-There are 200 time points and 100 trials.
-
-So there's 100 iterations of this sine wave and each sine wave has its own random phase.
-
-So in the upper plot that I'll show in a minute, I'm going to show you all of the individual time series
-
-as well as the average time series.
-
-And then I will show the amplitude spectrum.
-
-In this case, I'm extracting it via the Matlab function FFR, which computes the fast Fourier transform.
-
-I will talk more about the fast Fourier transform later in this course.
-
-But this basically gives the same outputs as the loop-based Fourier transform that you've seen before.
-
-OK, so here, this just looks like a mishmash of colors.
-
-Maybe we can zoom in here.
-
-So if I zoom in a little bit in time, you can see this looks quite pretty, it looks quite neat, but
-
-these are all the sine waves are all at 20 hertz.
-
-They all have the same amplitude, but the phases are different.
-
-And that's why you see this kind of mishmash crossing pattern.
-
-You can also see that the average of all of these sine waves is much smaller amplitude compared to the
-
-single trial sine waves.
-
-Now, let's look at the two ways of extracting the amplitudes from the spectrum. So the spectrum
-
-shown in the red lines here corresponds to the average amplitude.
-
-So what I do here is first extract the magnitudes of each Fourier coefficient.
-
-Then I scale them up by two and then I take the average.
-
-So notice I'm taking the average of the magnitudes.
-
-And here that is one.
-
-Now, in this case, the black line, the spectrum indicated by the black line, that's the average
-
-coefficient.
-
-So here I'm averaging over all the coefficients and then I'm taking the magnitude.
-
-So you can see the Matlab code for these two is almost identical.
-
-I'm just swapping the order of the magnitude and the averaging.
-
-So let me go back to the slide for a minute and show you what this corresponds to.
-
-So those two options correspond to this, so extracting the magnitude and then averaging these two magnitudes
-
-together; versus this, which is averaging the complex Fourier coefficients together and then taking
-
-the length of the average.
-
-So in this case, these two spectra are quite different.
-
-And that's because they all of the individual sine waves have randomized phase values.
-
-By the way, it looks like these are shifted here; I imposed a slight shift of plus point two. That's
-
-just to make it easier to visualize the red dots and the black dots simultaneously on this graph.
-
-They, in fact, have identical frequencies.
-
-OK, so now we can change the amount of phase randomization by, for example, setting this to be one.
-
-So now I'm generating sine waves with random phases between zero and pi, instead of between zero and
-
-two pi.
-
-And you can see the effect in the time domain: the sine waves are now more clustered in time and therefore
-
-the average sine wave has larger amplitude, and these two are approaching each other.
-
-And you can play around with this code.
-
-In fact, I encourage you to spend some time playing around with this code.
-
-We can make this a very small amount of variability.
-
-So point one times pi, and then that times some random number between zero and one.
-
-And that's going to generate very little phase jitter.
-
-And so we can zoom in here and you can see that there is some phase jitter for the different trials, the
-
-different sine waves in this data set, but they're all extremely close to each other.
-
-And therefore, in the frequency domain, the spectra are almost exactly the same for taking the average
-
-of the amplitudes versus the amplitude of the average complex Fourier coefficient.
-
-So in this video, I showed you two different ways of averaging Fourier coefficients, either averaging
-
-the coefficients in the complex domain or extracting the magnitudes -- the amplitudes -- and then averaging
-
-those. You will see an example of this applied to real data in the homework problems for the section
-
-of this course on the Fast Fourier transform.
+### Python
+
+For this specific example we will generate 100 time series with an identical
+frequency (1) and amplitude (20 Hz), but each trial has a random phase offset
+ranging 0-1 multiplied by a scale factor (e.g., $2\pi$ for a maximum of one
+full cycle).
+
+```{python}
+# simulation parameters
+ntrials = 100
+srate   = 200 # Hz
+time    = np.arange(0,1,1/srate)
+pnts    = len(time)
+
+scale_factors = [5, 10, 20]
+
+fig = plt.figure()
+panels = fig.subplot_mosaic([[sf] for sf in scale_factors], sharex=True)
+panels[scale_factors[0]].set_title("Time domain")
+
+t_data = {}
+for scaler in scale_factors:
+
+    # Make the shape using broadcasting
+    t_data[scaler] = np.sin(
+        (2 * np.pi * 20 * time).reshape(pnts, 1) +
+        (scaler/10 * np.pi * np.random.rand(1, ntrials))
+    )
+
+    # Plot the trials on the time domain
+    panels[scaler].plot(time, t_data[scaler]) # data axis is the column (mpl)
+    panels[scaler].plot(time, np.mean(t_data[scaler], axis=1), color="k", lw=3)
+    panels[scaler].set_ylabel(f"scaler = {scaler/10}")
+    panels[scaler].set_xlim(.3, .7)
+
+panels[scale_factors[-1]].set_xlabel('Time (sec.)')
+fig.supylabel('Amplitude')
+fig.tight_layout()
+```
+
+Then, we plot the individual time series, the average time series, and the
+amplitude spectrum. The latter is extracted with the fast fourier transform
+(`fft` function) [see section SECTION].
+
+The result shows all the sine waves forming a mishmash crossing pattern due the
+the different phase offsets. The amplitude of the average time series is much
+smaller compared to the each individual trial. 
+
+For calculating the average of magnitudes (red), we take the absolute value of
+each Fourier coefficient, scale them up by two and take the average. The
+average of fouriere coeffiints (average of vectors, black) is calculated by
+averaging first and then extracting the magnitude. Even though the code looks
+nearly the same, the average of magnitudes (red) has a an amplitude of one at
+20 Hz, whereas the average of vectors (black) is very small when the scale
+factor is $2\pi$. However, it grows larger if we decrease the phase jitter
+(amount of randomization), whith the amplitude at 20 Hz being nearly the same
+when the scale factor is $0.1$. On the time dmain we can observe how the waves
+are more aligned the the smaller is the scale factor.
+
+
+```{python}
+for color, (scaler, t_trials) in zip(["m", "g", "c"], t_data.items()):
+
+    freq_trials = scipy.fftpack.fft(t_trials,axis=0) / pnts
+    hz = np.linspace(0, srate/2, int(np.floor(pnts/2)))
+
+    # averaging option 2: magnitude, then complex Fourier coefficients
+    mag_avg = np.mean( 2*np.abs(freq_trials),axis=1 )[0:len(hz)]
+    
+    # averaging option 1: complex Fourier coefficients, then magnitude
+    vector_avg = 2*np.abs( np.mean(freq_trials,axis=1) )[0:len(hz)]
+
+    # plot the average magnitude (only the first time)
+    if color == "m":
+        plt.stem(hz, mag_avg, f'ks-', label='Magnitude average')
+    
+    # Plot the average vector
+    vector_label = f"Coef average (scale = {scaler/10})"
+    plt.stem(hz, vector_avg, f'{color}s-', label=vector_label)
+
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Amplitude')
+plt.title('Frequency domain')
+plt.legend()
+```
 
 # VIDEO: The DC coefficient
 
