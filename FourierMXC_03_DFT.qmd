@@ -999,8 +999,20 @@ plt.xlabel('Frequency (Hz)'), plt.ylabel('Amplitude (a.u.)')
 
 ## Amplitude spectrum vs. power spectrum
 
+The power and the amplitude spectrum are related to each other, with the latter
+being the amplitude squared power (or, alternatively, amplitude is the
+principal square root of power).
 
-```python
+If we plot a fourier coefficient on the complex plane, the amplitude would be
+the magnitude, the distance away from the origin. Squaring amplitudes under
+one causes them to become even smaller, whereas amplitudes larger than one
+become even larger. This enhances the differences across the spectrum, offering
+a "cleaner" result.
+
+### Python
+
+
+```{python}
 # simulation parameters
 srate = 1000
 time  = np.arange(0,.85,1/srate)
@@ -1050,8 +1062,94 @@ plt.xlim([0,20])
 plt.xlabel('Frequency (Hz)')
 plt.ylabel('Decibel power')
 
+plt.tight_layout()
+
 plt.show()
 ```
+
+We just generate a sine wave with a frequency of 10 hertz, an amplitude of 2.5,
+and a length of 850 milliseconds. Note this means the number of cycles
+appearing on the signal will not be an integer, and the Fourier transform
+will ¿allocate? energy to other frequencies to be able to represent our signal
+(see section on aliasing and non-stationarities). It allows to exeemplify the
+differences between the amplitude (black) and the power spectrum (red): the
+latter shows a higher peak, and the energy of the surrounding frequencies is
+lower because these are under 1 (within the unit circle here).
+
+The power and the amplitude spectrum are equally accurate representations of
+the signal, but the amplitude spectrum highlights the subtleties of the signal,
+whereas a bit better, whereas the power spectrum highlights the most prominent
+features.
+
+In many disciplines other disciplines, it's common to apply some sort of
+transformation or normalization of the power spectrum, sucha s the decibel
+(e.g., 10 times the log 10 of the raw power.).
+
+### Parseval's Theorem.
+
+Parceval's theorem states that the sum of all the power values squared equals
+the sum of all the time points squared: the total amount of energy in the time
+series is the same as the total amount of energy
+
+in the power spectrum.
+
+$$
+\Sigma^n_{t=1}
+\left| x_t \right|^{2}
+=
+\frac{1}{n} \left| X_t \right|^{2}
+$$
+
+Here is what Parceval's theorem would look like, translated into Matlab code.
+
+In most fields, in the scientific literature and in textbooks, it's more common to show the power
+
+spectrum than the amplitude spectrum.
+
+But in this course, I almost always show the amplitude spectrum.
+
+There is a good reason for this, and it's purely about education.
+
+As I've mentioned before, when you're learning new data analysis methods, it's always useful to see
+
+simulated data,
+
+so you know what the ground truth is.
+
+Therefore, it's easy to determine whether you're doing the right thing with your analysis, whether
+
+your analysis code is accurate.
+
+Now, it's trivially easy to look at the amplitude of a sine wave component in the frequency domain
+
+and match that against the amplitude that you specified in the time domain signal.
+
+On the other hand, if I plotted the power spectrum and you wanted to check whether the units in the
+
+frequency domain were accurate, you would first have to do a bit of math to see, for example, what
+
+2.5 squared is.
+
+So should you plot the amplitude spectrum or the power spectrum?
+
+The best answer is to do whatever is commonly done in your discipline.
+
+I'm a neuroscientist and as I mentioned before, in neuroscience, it's common to show baseline normalized
+
+power spectrum.
+
+So in my research, I always show decibel power spectra, and in my teaching I use amplitude spectra.
+
+So in this video, I discussed the distinction between amplitude and power in the Fourier transform.
+
+The power spectrum is more commonly shown in practice, but for teaching purposes, the amplitude spectrum
+
+has more advantages. Regardless,
+
+the important point is that both amplitude and power convey the same information about the signal,
+
+but in a slightly different form.
+
 ### A note about terminology of Fourier features
 
 To be added
