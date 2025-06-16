@@ -1089,9 +1089,7 @@ transformation or normalization of the power spectrum, sucha s the decibel
 
 Parceval's theorem states that the sum of all the power values squared equals
 the sum of all the time points squared: the total amount of energy in the time
-series is the same as the total amount of energy
-
-in the power spectrum.
+series is the same as the total amount of energy in the power spectrum.
 
 $$
 \Sigma^n_{t=1}
@@ -1100,55 +1098,12 @@ $$
 \frac{1}{n} \left| X_t \right|^{2}
 $$
 
-Here is what Parceval's theorem would look like, translated into Matlab code.
-
-In most fields, in the scientific literature and in textbooks, it's more common to show the power
-
-spectrum than the amplitude spectrum.
-
-But in this course, I almost always show the amplitude spectrum.
-
-There is a good reason for this, and it's purely about education.
-
-As I've mentioned before, when you're learning new data analysis methods, it's always useful to see
-
-simulated data,
-
-so you know what the ground truth is.
-
-Therefore, it's easy to determine whether you're doing the right thing with your analysis, whether
-
-your analysis code is accurate.
-
-Now, it's trivially easy to look at the amplitude of a sine wave component in the frequency domain
-
-and match that against the amplitude that you specified in the time domain signal.
-
-On the other hand, if I plotted the power spectrum and you wanted to check whether the units in the
-
-frequency domain were accurate, you would first have to do a bit of math to see, for example, what
-
-2.5 squared is.
-
-So should you plot the amplitude spectrum or the power spectrum?
-
-The best answer is to do whatever is commonly done in your discipline.
-
-I'm a neuroscientist and as I mentioned before, in neuroscience, it's common to show baseline normalized
-
-power spectrum.
-
-So in my research, I always show decibel power spectra, and in my teaching I use amplitude spectra.
-
-So in this video, I discussed the distinction between amplitude and power in the Fourier transform.
-
-The power spectrum is more commonly shown in practice, but for teaching purposes, the amplitude spectrum
-
-has more advantages. Regardless,
-
-the important point is that both amplitude and power convey the same information about the signal,
-
-but in a slightly different form.
+Here we use focus on the amplitude spectrum because it makes trivial to seel if
+the signal on the the frequency domain frequency domain matches matches the
+one we simulated on the time domain. If we were using the power spectrum we
+would need some math to check wether the calculations are correct. Nonetheles,
+using the amplitude or the power spectum, or a transformation of thereof
+depends on the specific discipline.
 
 ### A note about terminology of Fourier features
 
