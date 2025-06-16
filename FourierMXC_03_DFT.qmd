@@ -1107,4 +1107,20 @@ depends on the specific discipline.
 
 ### A note about terminology of Fourier features
 
-To be added
+Here we focus on how amplitude and magnitude are related to each other.
+
+
+The word amplitude can be used in the time domain to indicate the value per
+time, and wether it is positive or negative. When we get to the time domain we
+use the "amplitude spectrum", which uses the same term, but now is one value
+per sine wave, one value for the entire time series at a particular frequency.
+Note these amplitudes only can be positive, as they represent the distance of
+the Fourier coefficient away from the origin of the complex plane.
+
+Each Fourier coefficient is the the complex dot product between a signal and a
+complex sine wave with certain frequency. This dot product represents the
+distance away from the origin. Thus, this line cannot be negative, that's why amplitude in the frequency domain is a non-negative quantity.
+
+In other contexts like linear algebra or complex analysis, this distance would
+be called the magnitude of this vector, which is exactly the same as the
+amplitude.
