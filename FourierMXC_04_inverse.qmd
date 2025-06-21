@@ -1,6 +1,6 @@
 # Code for Section 4: The discrete inverse Fourier transform
 
-```python
+```{python}
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -15,7 +15,8 @@ from mpl_toolkits.mplot3d import Axes3D
 ## Inverse discrete Fourier transform
 
 The forward Fourier transform uses complex sine waves to convert signals from
-the time domain, to the frequency domain. The result is a series of Fourier coefficients depicting with which which amplitude and phase the signal best
+the time domain, to the frequency domain. The result is a series of Fourier
+coefficients depicting with which which amplitude and phase the signal best
 matches the complex sine wave corresponding to each frequency.
 
 The inverse fourier transform is the opposite process. The complex Fourier
@@ -24,129 +25,107 @@ Thus, it is just a matter of looping applying some steps for each:
 
 1. Create a complex sine wave with the same number of time points as the signal and a frequency defined by point-1.
 
-2. Multiply that sine wave by the complex Fourier coefficient (the coefficient that you obtained with the forward Fourier transform).
+2. Multiply that sine wave by the complex Fourier coefficient (from the forward Fourier transform).
 
-3.Sum the modulated (and multiplied) complex sine waves together.
+3. Sum the modulated (and multiplied) complex sine waves together.
 
-After this whole procedure, the result will be exactly the original signal that you started with.
+Divide the result by N (because the loop involved summing over N), obtaining
+the original signal.
 
-So you can think of these complex sine waves like templates.
+You can think of these complex sine waves like templates, which need to be
+be modulated by the amplitude and phase given by the complex Fourier
+coefficients.
 
-These are like template sine waves, and then you have to modulate them by a specific amplitude and
+### Pyhon
 
-a specific phase given by the complex Fourier coefficients.
+First we create a signal by summing two sine waves, with amplitudes of $2.5$
+and $1.5$, and frequencies of $4$ and $6.5$ Hz, respectively. The we apply
 
-Let's take a look in Matlab.
+```{python}
+## first, the forward Fourier transform
 
-Here, I'm creating a signal, you can see it's a sum of two sine wave, a sine wave at four
+# create the signal
+srate  = 1000 # hz
+time   = np.arange(0,2.,1/srate)  # time vector in seconds
+pnts   = len(time) # number of time points
+signal = 2.5 * np.sin( 2*np.pi*4*time ) + 1.5 * np.sin( 2*np.pi*6.5*time )
 
-hertz, a sine wave at six point five hertz.
 
-This is the forward Fourier transform.
+# prepare the Fourier transform
+fourTime = np.array(np.arange(0,pnts))/pnts
+fCoefs   = np.zeros(len(signal),dtype=complex)
 
-So this is all code you've seen before in the previous section.
+for fi in range(0,pnts):
+    
+    # create complex sine wave
+    csw = np.exp( -1j*2*np.pi*fi*fourTime )
+    
+    # compute dot product between sine wave and signal
+    fCoefs[fi] = np.sum( np.multiply(signal,csw) )
 
-So I'll just plot this.
+# extract amplitudes
+ampls = np.abs(fCoefs) / pnts
+ampls[range(1,len(ampls))] = 2*ampls[range(1,len(ampls))]
 
-And now here in this cell, we get to the inverse Fourier transform.
+# compute frequencies vector
+hz = np.linspace(0,srate/2,num=math.floor(pnts/2)+1)
 
-So here I'm initializing the vector for the reconstructed signal.
+plt.stem(hz,ampls[range(0,len(hz))])
+plt.xlim([0,10])
+plt.show()
+```
 
-Here I'm looping over time points, which is going to correspond to frequencies.
+### Inverse (1st way)
 
-Here I create the complex sine wave, so this is the template sine wave, you can see that it's e to
+Now we reconstruct the signal using the inverse Fourier transform. We
+initialize the vector for the reconstructed signal (`reconSignal`), and loop
+over the coefficients (or the time points, they have the same count). For each
+of them we generate a complex sine wave by multiplying the ith i-th Fourier
+coefficient by a template sine wave (negative of the one used on the forward
+transform). Then, each sine wave is added to the the reconstructed signal.
+Finished the looping, the reconstructed signal is divided by its lenth to
+[WHY??]. If we plot the original and the reconstructed signal we can see they
+match quite well.
 
-the i two pi f t. And this complex sine wave looks an awful lot like this complex sine wave from the
+```{python}
+## the inverse Fourier transform
 
-forward Fourier transform.
+# initialize time-domain reconstruction
+reconSignal = np.zeros(len(signal));
 
-The only difference, which you will notice here, is the minus sign.
+for fi in range(0,pnts):
+    
+    # create coefficient-modulated complex sine wave
+    csw = fCoefs[fi] * np.exp( 1j*2*np.pi*fi*fourTime )
+    
+    # sum them together
+    reconSignal = reconSignal + csw
 
-So here was the minus sign and here there is no minus sign.
 
-I'm going to talk about this in a minute.
+# divide by N
+reconSignal = reconSignal/pnts
 
-But then we take this complex sine wave as a template, multiply it by the complex Fourier coefficients,
+plt.plot(time,signal,label='original')
+plt.plot(time,np.real(reconSignal),'r.',label='reconstructed')
+plt.legend()
+plt.show() 
 
-and this was the output of the forward Fourier transform.
+# note: signals are entire overlapping. you can try zooming in
+```
 
-So this is the modulation of the template complex sine wave by the complex Fourier coefficient.
+Remember that you need a positive complex exponential and a negative complex
+exponential to sum in order to create a real-valued cosine wave (cosine
+identity). [...] The negative sign goes in the forward Fourier transform
+and the positive sign goes in the inverse Fourier transform to ensure the
+imaginary coefficients cancel out, reconstructing the original signal.
+[imposing a phase shift into the inverse Fourier transform??].
 
-And then we sum all of these together.
+Here we use `np.real`, because even though even though everything should be
+real, there may be minuscule computer rounding errors that cause the appearance
+of near-zero imaginary component for some of the sine waves, typically at or
+near the Nyquist frequency.
 
-So I'm summing the reconstructed signal onto itself and then I add to that this modulated complex sine
-
-wave.
-
-And that's basically all there is to it.
-
-So let me run this cell here you see in blue, this blue line here...
-
-Let me zoom in here....
-
-So the blue line here corresponds to the original signal, the signal that I generated up here,
-
-and the red line is the reconstruction from the inverse Fourier transform.
-
-And you can see that they match quite well.
-
-In fact, they match perfectly.
-
-Now, one key difference between the forward and inverse Fourier transform is the minus sign, as I
-
-just mentioned.
-
-You need the minus sign in one of them so that the imaginary coefficients will cancel in the inverse.
-
-That's because I mentioned in a few videos ago, in the previous section, about the cosine identity and
-
-how you need a positive complex exponential and a negative complex exponential to sum in order
-
-to create a real-valued cosine wave.
-
-So the negative sign goes in the forward Fourier transform and the positive sign goes in
-
-the inverse Fourier transform.
-
-And together, those will reconstruct the original signal by canceling out all of the imaginary components.
-
-Essentially, it's imposing a phase shift into the inverse Fourier transform.
-
-Another thing I would like to point out is this function real; I'm taking the reconstructed signal
-
-and putting it into the function real.
-
-Now, the thing is that there really isn't an imaginary component in here; it's all real valued.
-
-However, there are some tiny computer rounding errors that cause a very, very small near zero imaginary
-
-component for some of these sine waves that go back into the reconstructed signal.
-
-Typically at or near the Nyquist frequency. So we can see this,
-
-So first of all, we can see... whos reconSignal.
-
-So it actually is a complex signal.
-
-But if I plot the time by the real part of the reconSignal and then I plot time by the imaginary part
-
-of the reconSignal.
-
-Then you can see this is the real part of the signal, and this basically matches what I have here.
-
-Here's the imaginary part of the signal, which is really just a flat line.
-
-And I guess if you would zoom in.
-
-It's possible that at some point.
-
-You might actually see some tiny, tiny fluctuations in the imaginary part of the signal.
-
-So here I am at ten to the minus eight and this is still a flat line.
-
-All right, so now zooming in, you can finally see these computer rounding errors at the scale of 10
-
-to the minus 12, compared to the scale of the data, which is ten to the one or ten to the zero.
+### Inverse (2nd way)
 
 I would like to show you the inverse Fourier transform in a different way.
 
@@ -252,73 +231,7 @@ And I will also include, in this course, several specific examples in the sectio
 
 Fourier Transform.
 
-
-
-
-
-```python
-## first, the forward Fourier transform
-
-# create the signal
-srate  = 1000 # hz
-time   = np.arange(0,2.,1/srate)  # time vector in seconds
-pnts   = len(time) # number of time points
-signal = 2.5 * np.sin( 2*np.pi*4*time ) + 1.5 * np.sin( 2*np.pi*6.5*time )
-
-
-# prepare the Fourier transform
-fourTime = np.array(np.arange(0,pnts))/pnts
-fCoefs   = np.zeros(len(signal),dtype=complex)
-
-for fi in range(0,pnts):
-    
-    # create complex sine wave
-    csw = np.exp( -1j*2*np.pi*fi*fourTime )
-    
-    # compute dot product between sine wave and signal
-    fCoefs[fi] = np.sum( np.multiply(signal,csw) )
-
-# extract amplitudes
-ampls = np.abs(fCoefs) / pnts
-ampls[range(1,len(ampls))] = 2*ampls[range(1,len(ampls))]
-
-# compute frequencies vector
-hz = np.linspace(0,srate/2,num=math.floor(pnts/2)+1)
-
-plt.stem(hz,ampls[range(0,len(hz))])
-plt.xlim([0,10])
-plt.show()
-```
-
-
-```python
-## the inverse Fourier transform
-
-# initialize time-domain reconstruction
-reconSignal = np.zeros(len(signal));
-
-for fi in range(0,pnts):
-    
-    # create coefficient-modulated complex sine wave
-    csw = fCoefs[fi] * np.exp( 1j*2*np.pi*fi*fourTime )
-    
-    # sum them together
-    reconSignal = reconSignal + csw
-
-
-# divide by N
-reconSignal = reconSignal/pnts
-
-plt.plot(time,signal,label='original')
-plt.plot(time,np.real(reconSignal),'r.',label='reconstructed')
-plt.legend()
-plt.show() 
-
-# note: signals are entire overlapping. you can try zooming in
-```
-
-
-```python
+```{python}
 ## partial reconstruction of signal
 # this differs from the MATLAB code because in-loop graphics updating 
 # in python is version- and platform-dependent. Instead, here you can
