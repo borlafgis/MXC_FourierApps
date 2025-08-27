@@ -14,13 +14,14 @@ from mpl_toolkits.mplot3d import Axes3D
 
 ## Inverse discrete Fourier transform
 
-The forward Fourier transform uses complex sine waves to convert signals from
-the time domain, to the frequency domain. The result is a series of Fourier
-coefficients depicting with which which amplitude and phase the signal best
-matches the complex sine wave corresponding to each frequency.
+The forward Fourier transform uses complex sine waves to convert time domain
+signals into their equivalents in the frequency domain. The algorithm generates
+sine waves with different frequencies and estimates the amplitude and phase
+theat would provide the best match with the original signal (Fourier
+coefficients).
 
 The inverse fourier transform is the opposite process. The complex Fourier
-coefficients already depict the frequencies of the the complex sine waves.
+coefficients describe the characteristics of each frquency sine waves.
 Thus, it is just a matter of looping applying some steps for each:
 
 1. Create a complex sine wave with the same number of time points as the signal and a frequency defined by point-1.
@@ -248,8 +249,16 @@ time  = np.arange(0,3,1/srate)
 pnts  = len(time)
 
 # create multispectral signal
-signal  = np.multiply( (1+np.sin(2*np.pi*12*time)) , np.cos(np.sin(2*np.pi*25*time)+time) )
+signal  = np.multiply(
+    (1 + np.sin(2 * np.pi * 12 * time)),  
+    np.cos(np.sin(2 * np.pi * 25 * time) + time)
+    )
 
+plt.plot(time, signal)
+```
+
+
+```{python}
 # prepare the Fourier transform
 fourTime = np.array(range(0,pnts))/pnts
 fCoefs   = np.zeros(len(signal),dtype=complex)
@@ -258,6 +267,22 @@ fCoefs   = np.zeros(len(signal),dtype=complex)
 for fi in range(0,pnts):
     csw = np.exp( -1j*2*np.pi*fi*fourTime )
     fCoefs[fi] = np.sum( np.multiply(signal,csw) ) / pnts
+```
+
+```{python}
+plt.plot(np.abs(fCoefs))
+```
+
+```{python}
+abs_coefs = np.abs(fCoefs)
+
+print(np.quantile(abs_coefs, q=.995))
+
+print(np.argwhere(abs_coefs > .1)[:, 0])
+```
+
+
+```python
 
 
 # frequencies in Hz (goes up to srate just as a coding trick for later visualization)
@@ -273,26 +298,13 @@ for fi in range(0,pnts):#int(propfrex*pnts)):
     csw = fCoefs[fi] * np.exp( 1j*2*np.pi*fi*fourTime )
     
     # sum them together
-    reconSignal = reconSignal + csw
-    
-    if fi<300 or fi>2700:
-        # set up plot
-        pl.cla() # wipe the figure
-        plt.subplot2grid((2,1),(0,0))
-        plt.plot(time,signal,label='Original')
-        plt.plot(time,np.real(reconSignal),label='Reconstruction')
-        plt.legend()
-        
-        plt.subplot2grid((2,1),(1,0))
-        plt.plot(hz[0:fi],2*np.abs(fCoefs[0:fi]))
-        plt.xlim([0,hz[-1]])
+    reconSignal += csw
 
-        # show plot
-        display.clear_output(wait=True)
-        display.display(pl.gcf())
-        ttime.sleep(.01)
+    
 
 ```
+
+
 
 ---
 # VIDEO: Inverse Fourier transform for signal processing
