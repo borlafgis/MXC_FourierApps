@@ -3,6 +3,7 @@
 ```{python}
 import numpy as np
 import math
+from matplotlib.collections import LineCollection
 import matplotlib.pyplot as plt
 import pylab as pl
 from IPython import display
@@ -270,23 +271,36 @@ for fi in range(0,pnts):
 ```
 
 ```{python}
-plt.plot(np.abs(fCoefs))
+plt.plot(hz, np.abs(fCoefs[:len(hz)]))
 ```
 
 ```{python}
-abs_coefs = np.abs(fCoefs)
 
-print(np.quantile(abs_coefs, q=.995))
+# frequencies in Hz (goes up to srate just as a coding trick for later visualization)
+hz = np.linspace(0,srate,num=pnts)
+positive_abscoefs = np.abs(fCoefs[:len(hz)])
 
-print(np.argwhere(abs_coefs > .1)[:, 0])
+points = np.array([hz, positive_abscoefs]).T.reshape(-1, 1, 2)
+segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+print(segments.shape)
+
+
+lc = LineCollection(segments)
+lc.set_array(hz[1:])
+
+print(segments.shape)
+
+fig, axs = plt.subplots(1, 1)
+axs.add_collection(lc);
+
+axs.set_xlim(0, hz.max())
+axs.set_ylim(0, positive_abscoefs.max())
 ```
 
 
 ```python
 
-
-# frequencies in Hz (goes up to srate just as a coding trick for later visualization)
-hz = np.linspace(0,srate,num=pnts)
 
 # initialize the reconstructed signal
 reconSignal = np.zeros(len(signal),dtype=complex)
