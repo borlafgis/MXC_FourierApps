@@ -3,6 +3,7 @@
 ```{python}
 import numpy as np
 import math
+from matplotlib import colormaps
 from matplotlib.collections import LineCollection
 import matplotlib.pyplot as plt
 import pylab as pl
@@ -15,33 +16,37 @@ from mpl_toolkits.mplot3d import Axes3D
 
 ## Inverse discrete Fourier transform
 
-The forward Fourier transform uses complex sine waves to convert time domain
-signals into their equivalents in the frequency domain. The algorithm generates
-sine waves with different frequencies and estimates the amplitude and phase
-theat would provide the best match with the original signal (Fourier
-coefficients).
+The forward Fourier transform converts signals from time- to frequency domain
+using complex sine waves. The algorithm works by generating waves with different
+frequencies and asessing which amplitude and phase that provide the best match
+with the original signal (Fourier coefficients).
 
-The inverse fourier transform is the opposite process. The complex Fourier
-coefficients describe the characteristics of each frquency sine waves.
-Thus, it is just a matter of looping applying some steps for each:
+The inverse fourier transform is the opposite process. It takes the Fourier
+coefficients describing the waves characteristics of each frquency sine waves.
+Thus, it is just a matter of repeating the following steps for each frequency:
 
-1. Create a complex sine wave with the same number of time points as the signal and a frequency defined by point-1.
+1. Create a complex sine wave with the same number of time points as the signal
+   and a frequency defined by point-1 (???).
 
-2. Multiply that sine wave by the complex Fourier coefficient (from the forward Fourier transform).
+2. Multiply that sine wave by the complex Fourier coefficient (from the forward
+   Fourier transform).
 
 3. Sum the modulated (and multiplied) complex sine waves together.
 
-Divide the result by N (because the loop involved summing over N), obtaining
+Divide the result by $N$ (because the loop involved summing over $N$), obtaining
 the original signal.
 
 You can think of these complex sine waves like templates, which need to be
 be modulated by the amplitude and phase given by the complex Fourier
 coefficients.
 
-### Pyhon
+### Python
 
-First we create a signal by summing two sine waves, with amplitudes of $2.5$
-and $1.5$, and frequencies of $4$ and $6.5$ Hz, respectively. The we apply
+#### Forward transform
+
+First we create a signal by summing two sine waves, with frequencies of $4$ and
+$6.5$ Hz whose amplitudes are $2.5$ and $1.5$. The we apply the forward Fourier
+transform.
 
 ```{python}
 ## first, the forward Fourier transform
@@ -77,17 +82,19 @@ plt.xlim([0,10])
 plt.show()
 ```
 
-### Inverse (1st way)
+#### Inverse transform (1st way)
 
 Now we reconstruct the signal using the inverse Fourier transform. We
 initialize the vector for the reconstructed signal (`reconSignal`), and loop
-over the coefficients (or the time points, they have the same count). For each
-of them we generate a complex sine wave by multiplying the ith i-th Fourier
-coefficient by a template sine wave (negative of the one used on the forward
-transform). Then, each sine wave is added to the the reconstructed signal.
-Finished the looping, the reconstructed signal is divided by its lenth to
+over the Fourier coefficients of the frequencies.
+(or the time points, they have the same count).
+For each of them we multiply the `fi` Fourier coefficient by a template sine
+wave with frequency `fi` 
+(modulation of the complex sine wave by the complex Fourier coefficient).
+Then, each sine wave is added to the the reconstructed signal. Once the looping
+has finished, the reconstructed signal is divided by its lenth to
 [WHY??]. If we plot the original and the reconstructed signal we can see they
-match quite well.
+match quite well. 
 
 ```{python}
 ## the inverse Fourier transform
@@ -107,131 +114,53 @@ for fi in range(0,pnts):
 # divide by N
 reconSignal = reconSignal/pnts
 
-plt.plot(time,signal,label='original')
-plt.plot(time,np.real(reconSignal),'r.',label='reconstructed')
+plt.plot(time, signal, label='original')
+plt.plot(time, np.real(reconSignal), 'r.', label='reconstructed')
 plt.legend()
 plt.show() 
 
 # note: signals are entire overlapping. you can try zooming in
 ```
 
-Remember that you need a positive complex exponential and a negative complex
-exponential to sum in order to create a real-valued cosine wave (cosine
-identity). [...] The negative sign goes in the forward Fourier transform
-and the positive sign goes in the inverse Fourier transform to ensure the
-imaginary coefficients cancel out, reconstructing the original signal.
-[imposing a phase shift into the inverse Fourier transform??].
+Note that the formula used to create the template sine waves has a slight
+difference with respect with the formula used on the forward transform. In this
+case the minus sign is absent to ensue imaginary coefficients are canceled in
+the inverse transform.
+[this absence imposes a phase shift into the inverse Fourier transform??].
+This is related to the cosine identity: both a positive and negative complex
+exponentials need to be summed to obtain 
+a real-valued cosine wave, and, in this case, to reconstruct a real-valued
+signal.
 
-Here we use `np.real`, because even though even though everything should be
-real, there may be minuscule computer rounding errors that cause the appearance
-of near-zero imaginary component for some of the sine waves, typically at or
-near the Nyquist frequency.
+Also note that even though the results should be real-valued, we apply
+`np.real` to take care of near-zero imaginary component for waves near the
+Nyquist frequency that are caused by computer rounding errors.
 
 ### Inverse (2nd way)
 
-I would like to show you the inverse Fourier transform in a different way.
+To highlight the concept of the inverse Fourier transform we create a rather
+bizarre multispectral signal (e.g., a sine embedded in the cosine), apply the
+forward Fourier transform, and then reconstruct the signal frequency by
+frequency using its inverse inverse.
 
-Now, this is going to be in an animation which I think will highlight the picture, the concept, that
+The frequency and time domain are represented on the upper and lower part of
+the plot. Each line on the time domain has been reconstructed with all the
+frequencies equal or under the value depicted on its label. We casn see that
+the more frequancues we add, the cloaser we ger to the original signal. When
+we reach [N] we have perfectly reconstructed the original signal.
 
-the inverse Fourier transform is building up the signal one frequency at a time in this loop.
+Note that if we just sum up the positive frequencies (up to [N]), the result
+is very similar to the full sum, albeit it is missing half of the amplitude
+that is contained by the negative frequencies.
 
-OK, so what I'm going to do is create this rather bizarre looking multispectral signal.
+### Areas of application
 
-You can see it's a pretty weird signal, has a sine embedded in the cosine, for example.
+Many signal processing algorithms (convolution, filtering, cross correlation),
+can be applied in a more efficient way whilst on the frequency domain. Thus,
+it is necessary to use the forward transform to benefit from these speed up,
+and then return the signal to the time domain using the inverse transform.
 
-So here I compute the Fourier transform of this signal, and here I'm setting up a movie. And actually I
 
-think I'll run the movie and then I'll talk about it as it's playing.
-
-So here in blue, you see the original signal, and in black you see this kind of jumpy, wavy line.
-
-And what we're doing here is reconstructing the original signal, one frequency at a time, using the
-
-inverse Fourier transform.
-
-And here you see the amplitude spectrum being built up over time, one frequency at a time.
-
-And as these frequencies are updating in this plot, they're also being added to this time course here.
-
-So as time goes on, which means we're adding more and more of the frequencies, you see the black line
-
-will match closer and closer to the blue line.
-
-Now, finally, we've gone through all of the frequencies and so we've reconstructed the signal perfectly.
-
-So here is the loop that goes over the inverse Fourier transform.
-
-Now this part of the loop is exactly the same thing that I showed up here.
-
-This inverse Fourier transform.
-
-The only difference, or the only additions here, is that I'm adding this plotting code here.
-
-And basically this plotting code is updating this amplitude spectrum and it's updating the time domain
-
-plot as it's being plotted for each additional frequency in the inverse Fourier transform.
-
-So I'll run this again and there's one thing that I would like to point out explicitly.
-
-Well, first of all, it's really neat.
-
-It's fun to watch.
-
-So it looks like it's really jumpy.
-
-But that's just because these frequencies are a bit discrete in here.
-
-So there are these frequency peaks in here and each time it gets to the peak, it looks like it's jumping.
-
-OK, so I'm actually going to cancel this here.
-
-And what I would like to point out is that you can see we've reconstructed all of the positive
-
-frequencies and we haven't yet gotten to the negative frequencies down here.
-
-And then you can see that the signal, the reconstructed signal in black, looks an awful lot like the
-
-blue line, but it's not quite complete.
-
-It looks like it's around half of the amplitude.
-
-And in fact, what's happening is that it really is just half the amplitude because we haven't yet gotten
-
-to the negative frequencies.
-
-In this video, I showed you how to compute the inverse Fourier transform. Once you already have the
-
-Fourier coefficients from the forward Fourier transform.
-
-The important thing to remember is that the inverse Fourier transform provides a perfect reconstruction
-
-of the original signal, provided that you didn't change any of the Fourier coefficients.
-
-You might wonder what the purpose of the inverse Fourier transform is. If going from the time domain
-
-to the frequency domain provides unique and important insights into rhythmicity of signals,
-
-then what is the point of applying the inverse Fourier transform to get back into the time domain? Particularly
-
-considering that the inverse Fourier transform is a perfect reconstruction of the original signal.
-
-The importance of the inverse Fourier transform comes from its use as a tool in signal processing.
-
-The idea is that many signal processing algorithms, such as convolution, filtering, and cross correlation,
-
-can be done faster and more efficiently in the frequency domain.
-
-Therefore, many signal processing techniques involve applying the forward Fourier transform,
-
-applying some signal processing algorithms on the Fourier coefficients, and then applying the inverse Fourier
-
-transform to get back to the time domain. I talk about this a lot more in my course on digital signal
-
-processing.
-
-And I will also include, in this course, several specific examples in the section on applications of the
-
-Fourier Transform.
 
 ```{python}
 ## partial reconstruction of signal
@@ -246,7 +175,7 @@ propfrex = .5
 
 # set parameters
 srate = 1000
-time  = np.arange(0,3,1/srate)
+time  = np.arange(0, 3, 1/srate)
 pnts  = len(time)
 
 # create multispectral signal
@@ -255,58 +184,40 @@ signal  = np.multiply(
     np.cos(np.sin(2 * np.pi * 25 * time) + time)
     )
 
-plt.plot(time, signal)
-```
-
-
-```{python}
 # prepare the Fourier transform
-fourTime = np.array(range(0,pnts))/pnts
-fCoefs   = np.zeros(len(signal),dtype=complex)
+fourTime = np.arange(0, pnts)/pnts
+fCoefs   = np.zeros(len(signal), dtype=complex)
 
 # here is the Fourier transform...
 for fi in range(0,pnts):
     csw = np.exp( -1j*2*np.pi*fi*fourTime )
     fCoefs[fi] = np.sum( np.multiply(signal,csw) ) / pnts
-```
 
-```{python}
-plt.plot(hz, np.abs(fCoefs[:len(hz)]))
-```
+fig, axs = plt.subplots(2, 1)
 
-```{python}
+# Plot the signal on the frequency domain using a gradient
+hz = np.linspace(0, srate, num=pnts)
+amplitude = 2 * np.abs(fCoefs)
 
-# frequencies in Hz (goes up to srate just as a coding trick for later visualization)
-hz = np.linspace(0,srate,num=pnts)
-positive_abscoefs = np.abs(fCoefs[:len(hz)])
-
-points = np.array([hz, positive_abscoefs]).T.reshape(-1, 1, 2)
-segments = np.concatenate([points[:-1], points[1:]], axis=1)
-
-print(segments.shape)
-
-
+# Create the line collection from the coordinates
+points = np.expand_dims(np.stack([hz, amplitude], axis=1), axis=1)
+segments = np.hstack([points[:-1], points[1:]])
 lc = LineCollection(segments)
-lc.set_array(hz[1:])
+lc.set_array(hz)
 
-print(segments.shape)
-
-fig, axs = plt.subplots(1, 1)
-axs.add_collection(lc);
-
-axs.set_xlim(0, hz.max())
-axs.set_ylim(0, positive_abscoefs.max())
-```
-
-
-```python
-
+# add the collection to the ax and st up the ax limits
+axs[0].add_collection(lc);
+axs[0].set_title("Frequency domain")
+axs[0].set_ylim(0, amplitude.max())
+axs[0].set_xlim(0, hz.max())
+axs[0].set_xticks(np.arange(0, int(srate/2) + 1, 100))
+axs[0].set_xlabel("Frequency (Hz)")
 
 # initialize the reconstructed signal
-reconSignal = np.zeros(len(signal),dtype=complex)
+reconSignal = np.zeros(pnts, dtype=complex)
 
 # inverse Fourier transform here
-for fi in range(0,pnts):#int(propfrex*pnts)):
+for fi in range(pnts):#int(propfrex*pnts)):
     
     # create coefficient-modulated complex sine wave
     csw = fCoefs[fi] * np.exp( 1j*2*np.pi*fi*fourTime )
@@ -314,19 +225,27 @@ for fi in range(0,pnts):#int(propfrex*pnts)):
     # sum them together
     reconSignal += csw
 
-    
+    if fi in [10, 1500, 2999]:
 
+        axs[1].plot(
+            time,
+            np.real(reconSignal),
+            zorder=-fi,
+            color=plt.cm.viridis(fi/(pnts-1)),
+            label=r"n$^{\circ}$" + str(fi))
+        #print(colors[fi])
+
+axs[1].legend(title="Reconstructed with frequencies up to...", ncols=3)
+axs[1].set_title("Time domain")
+axs[1].set_xlim(time[0], time[-1])
+axs[1].set_xlabel("Time (s)")
+
+fig.tight_layout()
 ```
 
+# Inverse Fourier transform for signal processing
 
-
----
-# VIDEO: Inverse Fourier transform for signal processing
----
-
-
-
-```python
+```{python}
 ## bandpass filter
 
 # simulation params
@@ -388,9 +307,4 @@ plt.plot(time,np.real(reconMod))
 plt.title('Band-stop filtered signal, time domain')
 plt.show()
 
-```
-
-
-```python
-len(fCoefsMod)
 ```
