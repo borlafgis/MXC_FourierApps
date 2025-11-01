@@ -245,33 +245,49 @@ fig.tight_layout()
 
 # Inverse Fourier transform for signal processing
 
-At the end of the previous video, I mentioned that one of the important uses of the inverse Fourier
 
-transform is in the context of data analysis and signal processing. And the idea is to implement signal
+As previously stated, the application of many signal processing algorithms is
+more efficient on the time domain. For example, in the case of band-stop
+filtering we take transform the signal, change the amplitudes or the phase
+values in the frequency domain, and then compute the inverse Fourier transform
+to get back to the time domain. Note this procedure is useful only when there
+are clearly spectral separable components in the signal.
 
-processing techniques in the frequency domain and then use the inverse Fourier transform to get back to
+## Python
 
-the time domain.
+First we create a signal with a pair of two sine waves at 4 and 10 hertz and
+compute the Fourierr Transform.
 
-I also mentioned that I'm going to discuss these topics in more detail in a later section of this
+```{python}
+srate = 1000
+time  = np.arange(0,2-1/srate,1/srate)
+pnts  = len(time)
 
-course, as well as in my signal processing course.
+# signal 
+signal = np.sin(2*np.pi*4*time) + np.sin(2*np.pi*10*time)
 
-But I thought it would be interesting to already introduce the idea here.
 
-So here is the idea.
+# Fourier transform
+fourTime = np.array(np.arange(0,pnts))/pnts
+fCoefs   = np.zeros(len(signal),dtype=complex)
 
-You compute the Fourier transform of a signal, change the amplitudes or the phase values in the frequency
+for fi in range(0,pnts):
+    
+    # create complex sine wave
+    csw = np.exp( -1j*2*np.pi*fi*fourTime )
+    
+    # compute dot product between sine wave and signal
+    fCoefs[fi] = np.sum( np.multiply(signal,csw) )/pnts
 
-domain, and then compute the inverse Fourier transform to get back to the time domain.
 
-This procedure is useful only when there are clearly spectral separable components in the signal.
+# frequencies in Hz
+hz = np.linspace(0,srate/2,int(np.floor(pnts/2.0)+1))
 
-Let me show you an example of using the inverse Fourier transform for band-stop filtering in Matlab.
-
-So here I create a signal, it's just the sum of two sine waves at four hertz and at 10 hertz.
-
-Here I compete the Fourier transform, nothing new... nothing new.
+# now plot
+plt.plot(time,signal)
+plt.title('Original signal, time domain')
+plt.show()
+```
 
 And then here I'm going to compete the inverse Fourier transform and then make some plots.
 
@@ -432,33 +448,6 @@ feature of a signal while leaving another spectral feature untouched.
 This shows the usefulness of the inverse Fourier transform for signal processing applications.
 
 ```{python}
-## bandpass filter
-
-# simulation params
-srate = 1000
-time  = np.arange(0,2-1/srate,1/srate)
-pnts  = len(time)
-
-# signal 
-signal = np.sin(2*np.pi*4*time) + np.sin(2*np.pi*10*time)
-
-
-# Fourier transform
-fourTime = np.array(np.arange(0,pnts))/pnts
-fCoefs   = np.zeros(len(signal),dtype=complex)
-
-for fi in range(0,pnts):
-    
-    # create complex sine wave
-    csw = np.exp( -1j*2*np.pi*fi*fourTime )
-    
-    # compute dot product between sine wave and signal
-    fCoefs[fi] = np.sum( np.multiply(signal,csw) )/pnts
-
-
-# frequencies in Hz
-hz = np.linspace(0,srate/2,int(np.floor(pnts/2.0)+1))
-
 # find the coefficient for 10 Hz
 freqidx = np.argmin(np.abs(hz-10))
 
@@ -474,13 +463,6 @@ reconMod = np.zeros(len(signal),dtype=complex)
 for fi in range(0,pnts):
     csw = fCoefsMod[fi] * np.exp( 1j*2*np.pi*fi*fourTime )
     reconMod = reconMod + csw
-
-
-
-# now plot
-plt.plot(time,signal)
-plt.title('Original signal, time domain')
-plt.show()
 
 # plot original amplitude spectrum
 plt.stem(hz,2*np.abs(fCoefs[0:len(hz)]))
