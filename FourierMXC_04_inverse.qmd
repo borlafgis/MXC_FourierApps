@@ -289,190 +289,66 @@ plt.title('Original signal, time domain')
 plt.show()
 ```
 
-And then here I'm going to compete the inverse Fourier transform and then make some plots.
-
-So first, let me show you what the original plot looks like.
-
-So I'm going to run this code.
-
-And I don't care about this stuff, I just want to show you what the original signal looks like.
-
-And I'll also show you the
-
-original amplitude spectrum.
-
-All right, so here we have our signal.
-
-It's a combination of a four hertz and a 10 hertz sine wave.
-
-So it's two sine waves, summed on top of each other.
-
-And that you see perfectly accurately reconstructed in the
-
-amplitude spectrum here in this plot.
-
-Now, what I want to do is eliminate the 10 hertz frequency component from this spectrum, so that we
-
-get a pure sine wave at four hertz.
-
-That's going to be the goal.
-
-And the mechanism, the way that I'm going to do that, is by taking the Fourier coefficients from the
-
-forward Fourier transform.
-
-Then I'm going to identify the frequency index corresponding to 10 hertz.
-
-That's going to be this component here.
-
-And then I'm going to set that Fourier coefficient to be zero.
-
-So now that I've modulated the Fourier coefficients, I'm going to do a reconstruction using
-
-the inverse Fourier transform. And now I'm not using the original Fourier coefficients, but the modulated
-
-Fourier coefficients, with the coefficient corresponding to the ten hertz component set to zero.
-
-And then we're going to plot that and see what that looks like.
-
-All right.
-
-So now I'm going to run this entire cell and we can take a look.
-
-So here's the original signal.
-
-This is the amplitude spectrum of the original signal, and now here is the band-stopped filtered signal.
-
-So you might be a little bit confused and perhaps a little bit disappointed because I said that our
-
-goal was to reconstruct exactly the four hertz component without the 10 Hertz component.
-
-But when you look at this, this is clearly not a pure sine wave.
-
-In fact, it looks an awful lot like this original signal.
-
-But these faster sine waves are
-
-dampened. They're a little bit smaller in amplitude compared to what they are here.
-
-I encourage you to pause the video and see if you can figure out what went wrong here. What's wrong
-
-in the code, and why we still have a ten hertz component here.
-
-So it turns out that what went wrong here is that I didn't account for the fact that the amplitude of
-
-this
-
-10 hertz component is split between the positive frequencies and the negative frequencies.
-
-So, in fact, what I've done here is zero out the positive frequency, but I did not zero out the negative
-
-frequency, the corresponding negative frequency for 10 hertz.
-
-So that means that I only actually attenuated the ten hz signal.
-
-I got rid of half of its amplitude.
-
-Half of its amplitude was still in the negative frequency.
-
-So let me do that.
-
-Let me get rid of the corresponding negative frequency.
-
-So that's going to be fCoefModulated.
-
-And now I want the...
-
-So I want to go from the end, so the negative frequency is going to be from the end minus freqidx.
-
-And then we have to add this plus two here.
-
-So this plus two is actually just a matlab indexing.
-
-Normally it would be a plus one for typical indexing.
-
-However, you also have to account for the DC component.
-
-For the DC component is the first element in the positive frequencies.
-
-But remember that the negative frequencies don't have a zero hertz component, so therefore we have
-
-to add an additional offset to the negative frequencies going backwards to account for this DC component
-
-here.
-
-I realize that's a little bit confusing, but this is just something about programming and indexing.
-
-This is not really about the Fourier transform.
-
-The important thing about the Fourier transform is that I'm also setting to zero the Fourier coefficient
-
-corresponding to minus 10 hertz.
-
-OK, and now I'm going to run this whole cell again.
-
-And now you see, we don't see any 10 hertz component in the reconstructed signal.
-
-There's only a four Hertz component.
-
-Now, from this example, you can see why this procedure is appropriate only for signals that have clearly
-
-spectrally separable components. If these two components of the signal
-
-overlapped in the frequency domain, then simply removing some frequencies is not going to isolate one
-
-part of the signal.
-
-Now, one important word of warning: This procedure, where I just zeroed out one Fourier coefficient,
-
-can introduce artifacts in the time domain signal. So typically you would not want to just set some
-
-Fourier coefficients exactly to zero.
-
-Typically, you would want to have some kind of gentle slope instead of a hard edge.
-
-I'll show why that's the case in the section about the effects of non-stationarity, and in my course
-
-on signal processing I talk a lot more about optimal design and appropriate design of low pass filters
-
-and high pass filters, band-stop filters and band-pass filters.
-
-In this case, this very hard edge filter happens to work really well because the signal contains only
-
-pure sine waves.
-
-In this video, I showed you an application of using the inverse Fourier transform to suppress one spectral
-
-feature of a signal while leaving another spectral feature untouched.
-
-This shows the usefulness of the inverse Fourier transform for signal processing applications.
+On the amplitude spectrum we see these two frequencies are perfectly
+reconstructed on the frequency domain.
 
 ```{python}
-# find the coefficient for 10 Hz
-freqidx = np.argmin(np.abs(hz-10))
-
-# set that coefficient to zero
-fCoefsMod = list(fCoefs)
-fCoefsMod[freqidx] = 0
-# fCoefsMod[-freqidx] = 0
-fCoefsMod[len(fCoefsMod)-freqidx] = 0 
-
-
-# and compute inverse
-reconMod = np.zeros(len(signal),dtype=complex)
-for fi in range(0,pnts):
-    csw = fCoefsMod[fi] * np.exp( 1j*2*np.pi*fi*fourTime )
-    reconMod = reconMod + csw
-
 # plot original amplitude spectrum
 plt.stem(hz,2*np.abs(fCoefs[0:len(hz)]))
 plt.xlim([0,25])
 plt.title('Original signal, frequency domain')
 plt.show()
+```
+
+Then we eliminate the 10 Hz frequency component, recovering just a pure sine
+wave at 4 hertz. To do this we identify the frequency index corresponding to
+10 hertz and we set that Fourier coefficient to 0. However, if we just do that,
+we see the result is is similar to the original with some dampening (less
+amplitude). This is because the amplitude the 10 hertz component is split
+between the positive and the negative frequencies. If we only zero out the
+positive frequency but not the negative, we are just halving the amplitude of
+that frequency. if we also remove the corresponding negative frequency using a
+negative index. Remember these do not have the DC component, so it is necessary
+to add an additional offset. After doing the removal we reconstruct the signal,
+and we can see there is only a 4 Hertz component.
+
+```{python}
+# find the coefficient for 10 Hz
+freqidx = np.argmin(np.abs(hz-10))
+
+# set the positive coefficient to zero
+fCoefsPositive = fCoefs.copy()
+fCoefsPositive[freqidx] = 0
+
+# set both negative and positive coefficients to 0 
+fCoefsBoth = fCoefs.copy()
+fCoefsBoth[freqidx] = 0
+fCoefsBoth[-freqidx] = 0 
+
+# and compute inverse
+reconPositive = np.zeros(len(signal),dtype=complex)
+reconBoth = np.zeros(len(signal),dtype=complex)
+
+for fi in range(0,pnts):
+    reconPositive += fCoefsPositive[fi] * np.exp( 1j*2*np.pi*fi*fourTime )
+    reconBoth += fCoefsBoth[fi] * np.exp( 1j*2*np.pi*fi*fourTime )
 
 # and plot modulated time series
-plt.plot(time,np.real(reconMod))
+plt.plot(time,signal)
+plt.plot(time, np.real(reconPositive))
+plt.plot(time, np.real(reconBoth))
 plt.title('Band-stop filtered signal, time domain')
 plt.show()
-
 ```
+
+In this example, we can see why this procedure is appropriate only for signals
+that have clearly spectrally separable components: if two components of the
+signal overlapped in the frequency domain, just removing some of them would not
+isolate one part of the signal.
+
+Another caveat is that zeroing Fourier coefficients can introduce artifacts in
+the time domain signal. In this case, this very hard edge filter happens to
+work really well because the signal contains only pure sine waves, but in
+general it is preferrable to have a gentle slope instead of a hard edge. This
+is explained on the section about the effects of non-stationarity, as well as
+on the course on signal processing (section on filter design).
