@@ -1,10 +1,6 @@
-# Code for Section 5: The fast Fourier transform
-## This code is for learning the Fourier transform.
+# The fast Fourier transform
 
-### mikexcohen.com
-
-
-```python
+```{python}
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -14,14 +10,189 @@ import scipy.fftpack
 from mpl_toolkits.mplot3d import Axes3D
 ```
 
+# How the FFT works, speed tests
 
----
-# VIDEO: How the FFT works, speed tests
----
+In this video, I'm going to introduce you to an algorithm called the Fast Fourier Transform, which
 
+most people just call the FFT.
 
+The discrete time Fourier transform, implemented as loops, the way that I've shown you so far
 
-```python
+in this course, is really not recommended for practical applications.
+
+I always teach the slow, discrete version of the Fourier transform first, because I believe that's the
+
+best way to learn about the Fourier transform.
+
+It's the way to see that the Fourier transform is not some complicated, magical algorithm that you
+
+need a PhD in mathematics to understand. However, that implementation of the Fourier transform is
+
+really slow and it has absolutely no application value other than teaching.
+
+The first Fourier transform has two steps, the first step is to put all of the complex sine waves into a
+
+matrix instead of using a loop.
+
+So here we have the sine waves going down.
+
+So in this case, time is going down.
+
+This is the signal in a column vector.
+
+And each column in this matrix is a complex sine wave from the Fourier transform.
+
+Now you can implement the Fourier transform as a vector matrix multiplication, instead of for loops
+
+over frequencies and using the dot product.
+
+The second step is then to decompose this matrix into a lot of separate matrices that are very sparse,
+
+meaning that these matrices contain mostly zeros and only a small number of non-zero elements.
+
+The thing is that computers are designed to multiply such sparse matrices really quickly, and this
+
+is what makes the Fourier transform really fast to implement on modern computers using the fast Fourier
+
+algorithm. Now, understanding in more detail exactly what this procedure entails, relies on knowing more
+
+about matrix decomposition techniques and advanced concepts in linear algebra.
+
+That's beyond the scope of this course.
+
+So I won't say anything more about it.
+
+Although I do talk about more advanced linear algebra techniques and Matrix decompositions in my course
+
+on linear algebra.
+
+The important point is that computers have highly efficient implementations of FFT algorithms and you
+
+should use them. There's nothing whatsoever that's different about the output of the FFT versus the
+
+loop-based version of the Fourier transform that you've learned so far.
+
+Now, let's have a look in Matlab.
+
+OK, so here I create a random signal, so it's just a bunch of random numbers, there's going to be
+
+10,000 of them. This is the slow loop-based Fourier transform.
+
+And here is the fast Fourier transform. FFT.
+
+And this is all nothing you haven't seen before.
+
+Perhaps the main new thing is this tic-toc function pair.
+
+So that means we start the clock here, do some computations, and here we're going to extract the total
+
+duration, the total amount of time that has passed since the tic command.
+
+So I do that here for the loop-based Fourier transform and repeat that again for the FFT function. And
+
+what you will see,
+
+so I'll run this...
+
+it'll take a few seconds.
+
+What you will see is that the slow Fourier transform,
+
+so that's this in the loop, is much, much slower than the FFT. You can see for exactly the same signal,
+
+this took over two seconds and it actually looks like this is zero.
+
+You might even think that there was some mistake that this didn't get computed.
+
+But if we look at this variable t, you can see it actually did take some time.
+
+It took a fraction of a millisecond, whereas the loop-based version took two point three seconds.
+
+And this is not an absolute difference, this difference will grow as the size of the signal will grow.
+
+So if you're a little bit bored, you can add even another order of magnitude to this signal.
+
+I'm not going to do that because I don't feel like waiting around for that long.
+
+But 10,000 data points is not very long for a real signal that you would be analyzing in practice.
+
+So this grows.
+
+This can be the difference between, you know, waiting a day for this to compute versus waiting a couple
+
+of seconds for this to compute.
+
+With this code, I want to show you that the FFT still needs the same two normalization factors that
+
+I discussed in a previous video.
+
+So here I am generating a signal.
+
+It's a sine wave with six hertz and an amplitude of two.
+
+Now, if I run this code, you'll see again that the amplitude is wrong.
+
+This is not the correct amplitude.
+
+The frequency is correct.
+
+So that part's good, but the amplitude is not correct.
+
+And just like with the previous video where I talked about these normalizations, you can increase this
+
+from two to four seconds.
+
+Now, this was of amplitude value of 2000.
+
+Now it's up to 4000.
+
+So, again, you need to apply the same two normalization factors here.
+
+So the first one, if you remember, was to divide the Fourier coefficients by the number of points
+
+in the signal, which in this case is variable npnts.
+
+So I can do that.
+
+Now we get an amplitude of one, which is half of the real amplitude of the simulated signal.
+
+And so, therefore, we need to apply the second normalization factor, which is to add the negative
+
+frequency coefficients onto the positive frequency coefficients, which in practice we just do by multiplying
+
+the amplitude of the positive coefficients by two.
+
+So this now accurately reconstructs the parameters of the simulation.
+
+And of course, you also remember that this is a shortcut.
+
+This is not entirely accurate.
+
+This is not totally true.
+
+This is now improperly scaling by two the DC component.
+
+And in this specific case, it doesn't really matter because the DC component is zero.
+
+So as long as you're aware that this is a bit of a shortcut and it will be accurate for the positive
+
+frequencies, but inaccurate for the zero frequency, then I think it's it's OK to leave it like this.
+
+In this video, I showed you how to use the FFT function in Matlab to implement the Fourier transform.
+
+As I mentioned before, the loop-based discrete Fourier transform that you've been working with so far
+
+in this course has a very large educational value.
+
+It's really the best way to learn about how the Fourier transform works and how to interpret the outputs
+
+of the Fourier transform.
+
+But in practice, you should always use the FFT function and never use that loop based discrete Fourier
+
+transform function.
+
+```{python}
 # create the signal
 pnts   = 1000
 signal = np.random.randn(pnts)
