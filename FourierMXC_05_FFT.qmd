@@ -10,117 +10,66 @@ import scipy.fftpack
 from mpl_toolkits.mplot3d import Axes3D
 ```
 
-# How the FFT works, speed tests
+## How the FFT works, speed tests
 
-In this video, I'm going to introduce you to an algorithm called the Fast Fourier Transform, which
+The loop-based implementation of the discrete time Fourier transform, only is
+useful as simple example to demistify its inner mechanisms, but is too slow
+for practical applications. The actual fast Fourier transform (FFT) first
+places all of the complex sine waves as the columns of a matrix, in a matrix
+(one column per wave), and the signal in a column vector, and then apply matrix multiplication (instead of applying the dot product in a loop). The next step
+is to decompose this matrix into a lot of separate matrices that are very
+sparse (non-zero elements), which can be easily processed by modern computers.
+A more detailed description would require to delve deeper into concepts from
+linear algebra, such as matrix decomposition. The point here is that is
+advisable to use the highly efficient implementations of that are readily
+available.
 
-most people just call the FFT.
+### Python
 
-The discrete time Fourier transform, implemented as loops, the way that I've shown you so far
+We create the a fully random signal with `np.random.randn`and apply the slow
+loop-based Fourier transform. The only novelty is the tic-toc variables, that
+store when `timeit.default_timer()` has been called. By substracting the
+timestamps we see how long the function has taken.
 
-in this course, is really not recommended for practical applications.
+```{python}
+# create the signal
+pnts   = 1000
+signal = np.random.randn(pnts)
 
-I always teach the slow, discrete version of the Fourier transform first, because I believe that's the
 
-best way to learn about the Fourier transform.
+# start the timer for "slow" Fourier transform
+tic = timeit.default_timer()
 
-It's the way to see that the Fourier transform is not some complicated, magical algorithm that you
+# prepare the Fourier transform
+fourTime = np.array(range(0,pnts))/pnts
+fCoefs   = np.zeros(len(signal),dtype=complex)
 
-need a PhD in mathematics to understand. However, that implementation of the Fourier transform is
+for fi in range(pnts):
+    csw = np.exp( -1j*2*np.pi*fi*fourTime )
+    fCoefs[fi] = np.sum( np.multiply(signal,csw) )
 
-really slow and it has absolutely no application value other than teaching.
 
-The first Fourier transform has two steps, the first step is to put all of the complex sine waves into a
+# end timer for slow Fourier transform
+toc = timeit.default_timer()
+t1 = toc-tic
 
-matrix instead of using a loop.
+# time the fast Fourier transform
+tic = timeit.default_timer()
+fCoefsF = scipy.fftpack.fft(signal)
+toc = timeit.default_timer()
+t2 = toc-tic
 
-So here we have the sine waves going down.
+# and plot
+plt.bar([1,2],[t1,t2])
+plt.title('Computation times')
+plt.ylabel('Time (sec.)')
+plt.xticks([1,2], ['loop','FFT'])
+plt.show()
 
-So in this case, time is going down.
+```
 
-This is the signal in a column vector.
-
-And each column in this matrix is a complex sine wave from the Fourier transform.
-
-Now you can implement the Fourier transform as a vector matrix multiplication, instead of for loops
-
-over frequencies and using the dot product.
-
-The second step is then to decompose this matrix into a lot of separate matrices that are very sparse,
-
-meaning that these matrices contain mostly zeros and only a small number of non-zero elements.
-
-The thing is that computers are designed to multiply such sparse matrices really quickly, and this
-
-is what makes the Fourier transform really fast to implement on modern computers using the fast Fourier
-
-algorithm. Now, understanding in more detail exactly what this procedure entails, relies on knowing more
-
-about matrix decomposition techniques and advanced concepts in linear algebra.
-
-That's beyond the scope of this course.
-
-So I won't say anything more about it.
-
-Although I do talk about more advanced linear algebra techniques and Matrix decompositions in my course
-
-on linear algebra.
-
-The important point is that computers have highly efficient implementations of FFT algorithms and you
-
-should use them. There's nothing whatsoever that's different about the output of the FFT versus the
-
-loop-based version of the Fourier transform that you've learned so far.
-
-Now, let's have a look in Matlab.
-
-OK, so here I create a random signal, so it's just a bunch of random numbers, there's going to be
-
-10,000 of them. This is the slow loop-based Fourier transform.
-
-And here is the fast Fourier transform. FFT.
-
-And this is all nothing you haven't seen before.
-
-Perhaps the main new thing is this tic-toc function pair.
-
-So that means we start the clock here, do some computations, and here we're going to extract the total
-
-duration, the total amount of time that has passed since the tic command.
-
-So I do that here for the loop-based Fourier transform and repeat that again for the FFT function. And
-
-what you will see,
-
-so I'll run this...
-
-it'll take a few seconds.
-
-What you will see is that the slow Fourier transform,
-
-so that's this in the loop, is much, much slower than the FFT. You can see for exactly the same signal,
-
-this took over two seconds and it actually looks like this is zero.
-
-You might even think that there was some mistake that this didn't get computed.
-
-But if we look at this variable t, you can see it actually did take some time.
-
-It took a fraction of a millisecond, whereas the loop-based version took two point three seconds.
-
-And this is not an absolute difference, this difference will grow as the size of the signal will grow.
-
-So if you're a little bit bored, you can add even another order of magnitude to this signal.
-
-I'm not going to do that because I don't feel like waiting around for that long.
-
-But 10,000 data points is not very long for a real signal that you would be analyzing in practice.
-
-So this grows.
-
-This can be the difference between, you know, waiting a day for this to compute versus waiting a couple
-
-of seconds for this to compute.
+The loop-based transform is much slower!. This difference grows with the length
+of the signal, so it is wise to use the fater version.
 
 With this code, I want to show you that the FFT still needs the same two normalization factors that
 
@@ -191,44 +140,6 @@ of the Fourier transform.
 But in practice, you should always use the FFT function and never use that loop based discrete Fourier
 
 transform function.
-
-```{python}
-# create the signal
-pnts   = 1000
-signal = np.random.randn(pnts)
-
-
-# start the timer for "slow" Fourier transform
-tic = timeit.default_timer()
-
-# prepare the Fourier transform
-fourTime = np.array(range(0,pnts))/pnts
-fCoefs   = np.zeros(len(signal),dtype=complex)
-
-for fi in range(pnts):
-    csw = np.exp( -1j*2*np.pi*fi*fourTime )
-    fCoefs[fi] = np.sum( np.multiply(signal,csw) )
-
-
-# end timer for slow Fourier transform
-toc = timeit.default_timer()
-t1 = toc-tic
-
-
-# time the fast Fourier transform
-tic = timeit.default_timer()
-fCoefsF = scipy.fftpack.fft(signal)
-toc = timeit.default_timer()
-t2 = toc-tic
-
-# and plot
-plt.bar([1,2],[t1,t2])
-plt.title('Computation times')
-plt.ylabel('Time (sec.)')
-plt.xticks([1,2], ['loop','FFT'])
-plt.show()
-
-```
 
 
 ```python
