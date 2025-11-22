@@ -175,39 +175,61 @@ connected to the sampling frequency resolution and the signal length.
 
 ## Time-domain zero padding
 
+Frequency resolution depends on the signal sampling and its length (number of
+points). There may be cases where we need to increase the frequency resolution,
+but is not possible to acquire more data. The [a?] solution a procedure called
+zero padding, which is adding a bunch of zeroes at the end of the time series.
+Note the number of time points is increased, but not the information content.
+
+### Python (manual)
+
+In this case our signal will be just a Hann taper, which looks like half a
+cosine. Then apply the FFT, and extract the amplitude (unnormalized). The
+un-padded signal looks like a very rapidly decaying exponential function.
+hen the the signal padded with 40 zeroes is taken to the frequency domain, it
+seems to interpolate between the frequencies of the un-padded signal. In fact,
+that's really what's happening: this amplitude spectrum is basically a sinc-
+interpolated version of thies original (un-padded) amplitude spectrum. It is
+also interesting that the frequencies are between the original points, we don't
+get extra frequencies at the beginning or the end.
+
 ```{python}
 # create the signal
-signal = np.hanning(40)
+signals = [np.hanning(40)]
+signals.append(np.concatenate(( signals[0], np.zeros(len(signals[0]))), axis=0))
 
-# note: in MATLAB I have a separate cell for the manual zero-padding.
-#       Here you can just uncomment the following line.
-#signal = np.concatenate((signal,np.zeros(len(signal))),axis=0)
+fig, panels = plt.subplots(2, 2, sharex="row", sharey="row")
+panels[0, 0].set_ylabel('Amplitude (time)')
+panels[1, 0].set_ylabel('Amplitude (freq.)')
 
-# time the fast Fourier transform
-signalX = scipy.fftpack.fft(signal)
+for col_idx, signal in enumerate(signals):
+    # time the fast Fourier transform
+    signalX = scipy.fftpack.fft(signal)
 
-# extract amplitude
-ampl = np.abs(signalX)
+    # extract amplitude
+    ampl = np.abs(signalX)#2 * /len(signal)
 
-# normalized frequency units
-frequnits = np.linspace(0,1,len(signal))
+    # normalized frequency units
+    frequnits = np.linspace(0, 1, len(signal))
 
-# and plot
-plt.plot(signal,'ks-')
-plt.xlim(0,80)
-plt.xlabel('Time (a.u.)')
-plt.ylabel('Amplitude')
-plt.title('Time domain')
-plt.show()
+    # and plot
+    panels[0, col_idx].plot(signal, 'ks-')
+    panels[1, col_idx].stem(frequnits, ampl, "k")
 
-plt.stem(frequnits,ampl)
-plt.xlim(-.01,.3)
-plt.xlabel('Frequency (a.u.)')
-plt.ylabel('Amplitude')
-plt.title('Frequency domain')
-plt.show()
+    # SET BOUNDS AND LABELS
+    panels[1, col_idx].set_xlim(-.01,.3)
+    panels[1, col_idx].set_xlabel('Frequency (a.u.)')
+
+fig.tight_layout()
 ```
 
+### Python (better way)
+
+In practice the FFT function allows to set the number of frequency bins (`n`).
+If this number, is smaller than the length of the signal the function only will
+take the first `n` points, whereas if it is larger, the signal will get padded
+with zeroes. Here we just take a small signal and we pad it with different
+amounts of zeroes to add (0, 10, 100).
 
 ```{python}
 ## zero-padding in fft function
@@ -216,15 +238,13 @@ plt.show()
 signal = [ 4, 6, -1, 0, 5, -4 ]
 
 # number of zeros to add after signal
-n2pad = [ 0, 10, 100 ]
-
-for zi in range(0,len(n2pad)):
+for pad in [ 0, 10, 100 ]:
     
     # total length of signal
-    zeropadN = len(signal)+n2pad[zi]
+    zeropadN = len(signal) + pad
     
     # FFT and amplitude
-    sigampl   = np.abs( scipy.fftpack.fft(signal,zeropadN) )
+    sigampl   = np.abs( scipy.fftpack.fft(signal, n=zeropadN) )
     
     # one of the two normalization steps
     sigampl = sigampl / 1
@@ -241,6 +261,17 @@ plt.xlabel('Frequency (.5 = Nyquist)')
 plt.ylabel('Amplitude (a.u.)')
 plt.show()
 ```
+
+As the padding increases the amplitude spectrum gets smoother and smoother, as
+a sinc-interpolated version of the original power spectrum.
+
+### effects of zero padding on normalization
+
+We know we have to multiply the positive coefficients by $2$, and divide by the
+number of pooints. However, that number should be with, or without the padding?. 
+If we use the padded length, the amplitude seems to drop as more zeroes are
+added, whereas the correct normalization needs to be based on the length of
+the original signal.
 
 ## Frequency-domain zero padding
 
@@ -325,13 +356,9 @@ plt.show()
 ```
 
 
----
-# VIDEO: Sampling rate vs. signal length
----
+## Sampling rate vs. signal length
 
-
-
-```python
+```{python}
 ## difference between sampling rate and number of time points for Fourier frequencies
 
 # temporal parameters
