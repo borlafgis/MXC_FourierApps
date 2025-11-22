@@ -240,6 +240,25 @@ plt.imshow(np.real(F))
 
 # Using the fft on matrices
 
+If you have data from multiple sensors, multiple channels or multiple trials,
+your daya may be organized as a matrix instead of as a vector. It boils down to
+identifying which dimension corresponds to time, because the transform needs to
+be applied over that dimension. Otherwise you were going to get bizarre,
+incorrect and uninterpretable results.
+
+
+You could loop over the dimensions, or, better
+still, just specify over which axis to apply the transform directly. Even
+though in principle is just a matter of preference for how you orient the data
+in Python, usually is advisable to different observations (time series) in
+different rows. 
+
+## Python
+
+We create a sine wave with a an amplitude 1 and a of frequency of 10 Hz, with a
+length of 2 seconds, and then we stack 50 copies, obtaining a matrix with size
+of `(50, 800)`. The colors repeat along the X axis and look identical over the
+Y axis because all these channels are exactly identical.
 
 ```{python}
 # using the matlib library
@@ -254,8 +273,25 @@ nreps = 50
 
 # dataset is repeated sine waves
 data = np.matlib.repmat( np.sin(2*np.pi*10*time), nreps,1 )
+
+# show data and spectra!
+plt.imshow(data)
+plt.xlabel('Time')
+plt.ylabel('Channel')
+plt.title('Time-domain signal');
 ```
 
+Now we computing the FFT of this data set over each dimension. In both cases
+the data retains the same size, but if we average the amplitude of each
+repetition and plot, the results are very different for each dimension.
+When FFT is applied to row axis (`0`, the first), all coefficients are very
+close to $0$. When it is applied to the column axis (`1`, the second), there is
+a single non-zero coefficient at 10 Hz, which means this is the correct way
+to do it.
+
+In the first case we are computing the Fourier transform over the elements of
+each column, and thus, there arent any sort of dynamics, just the DC component.
+On the second we apply the over each row separately, so it captures the cycle.
 
 ```{python}
 # FFT of data along each dimension
@@ -264,29 +300,14 @@ dataX1 = scipy.fftpack.fft(data,axis=0) / npnts
 dataX2 = scipy.fftpack.fft(data,axis=1) / npnts
 hz = np.linspace(0,srate/2,int(np.floor(npnts/2)+1))
 
-# check sizes
-print(np.shape(dataX1))
-print(np.shape(dataX2))
-```
+fig, panels = plt.subplots(2, 1, sharex=True, sharey=True)
 
+panels[0].set_title('FFT over channels')
+panels[0].set_ylabel('Amplitude (along rows)')
+panels[0].stem(hz,np.mean( 2*abs(dataX1[:,:len(hz)]),axis=0),'k')
 
-```{python}
-# show data and spectra!
-plt.imshow(data)
-plt.xlabel('Time')
-plt.ylabel('Channel')
-plt.title('Time-domain signal')
-plt.show()
-
-plt.stem(hz,np.mean( 2*abs(dataX1[:,:len(hz)]),axis=0),'k')
-plt.xlabel('Frequency (??)')
-plt.ylabel('Amplitude')
-plt.title('FFT over channels')
-plt.show()
-
-plt.stem(hz,np.mean( 2*abs(dataX2[:,:len(hz)]),axis=0),'k')
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Amplitude')
-plt.title('FFT over time')
-plt.show()
+panels[1].set_ylabel('Amplitude (along cols.)')
+panels[1].stem(hz,np.mean( 2*abs(dataX2[:,:len(hz)]),axis=0),'k')
+panels[1].set_xlabel('Frequency (Hz)')
+fig.tight_layout()
 ```
