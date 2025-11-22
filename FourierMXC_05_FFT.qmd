@@ -15,10 +15,10 @@ from mpl_toolkits.mplot3d import Axes3D
 The loop-based implementation of the discrete time Fourier transform, only is
 useful as simple example to demistify its inner mechanisms, but is too slow
 for practical applications. The actual fast Fourier transform (FFT) first
-places all of the complex sine waves as the columns of a matrix, in a matrix
+places all of the [template?] complex sine waves as the columns of a matrix
 (one column per wave), and the signal in a column vector, and then apply matrix multiplication (instead of applying the dot product in a loop). The next step
 is to decompose this matrix into a lot of separate matrices that are very
-sparse (non-zero elements), which can be easily processed by modern computers.
+sparse (mostly zeroes), which can be easily processed by modern computers.
 A more detailed description would require to delve deeper into concepts from
 linear algebra, such as matrix decomposition. The point here is that is
 advisable to use the highly efficient implementations of that are readily
@@ -26,8 +26,9 @@ available.
 
 ### Python
 
-We create the a fully random signal with `np.random.randn`and apply the slow
-loop-based Fourier transform. The only novelty is the tic-toc variables, that
+To test the speed of our slow implementation, and the faster one provided by
+Scipy, we create the a fully random signal with `np.random.randn`and apply
+both implementations. The only novelty is the tic-toc variables, that
 store when `timeit.default_timer()` has been called. By substracting the
 timestamps we see how long the function has taken.
 
@@ -69,80 +70,17 @@ plt.show()
 ```
 
 The loop-based transform is much slower!. This difference grows with the length
-of the signal, so it is wise to use the fater version.
+of the signal, so it is wise to use the faster version.
 
-With this code, I want to show you that the FFT still needs the same two normalization factors that
+### We still need to apply normalization!
 
-I discussed in a previous video.
+Note that the FFT still needs: two aforementioned normalizations so the 
+amplitude is correct: dividing the Fourier coefficients by the number of points
+in the signal (`npnts`), and multiply the positive frequencies by $2$ to
+account for the negative frecuencies (but not the 0th frecuency, the DC
+component!).
 
-So here I am generating a signal.
-
-It's a sine wave with six hertz and an amplitude of two.
-
-Now, if I run this code, you'll see again that the amplitude is wrong.
-
-This is not the correct amplitude.
-
-The frequency is correct.
-
-So that part's good, but the amplitude is not correct.
-
-And just like with the previous video where I talked about these normalizations, you can increase this
-
-from two to four seconds.
-
-Now, this was of amplitude value of 2000.
-
-Now it's up to 4000.
-
-So, again, you need to apply the same two normalization factors here.
-
-So the first one, if you remember, was to divide the Fourier coefficients by the number of points
-
-in the signal, which in this case is variable npnts.
-
-So I can do that.
-
-Now we get an amplitude of one, which is half of the real amplitude of the simulated signal.
-
-And so, therefore, we need to apply the second normalization factor, which is to add the negative
-
-frequency coefficients onto the positive frequency coefficients, which in practice we just do by multiplying
-
-the amplitude of the positive coefficients by two.
-
-So this now accurately reconstructs the parameters of the simulation.
-
-And of course, you also remember that this is a shortcut.
-
-This is not entirely accurate.
-
-This is not totally true.
-
-This is now improperly scaling by two the DC component.
-
-And in this specific case, it doesn't really matter because the DC component is zero.
-
-So as long as you're aware that this is a bit of a shortcut and it will be accurate for the positive
-
-frequencies, but inaccurate for the zero frequency, then I think it's it's OK to leave it like this.
-
-In this video, I showed you how to use the FFT function in Matlab to implement the Fourier transform.
-
-As I mentioned before, the loop-based discrete Fourier transform that you've been working with so far
-
-in this course has a very large educational value.
-
-It's really the best way to learn about how the Fourier transform works and how to interpret the outputs
-
-of the Fourier transform.
-
-But in practice, you should always use the FFT function and never use that loop based discrete Fourier
-
-transform function.
-
-
-```python
+```{python}
 ## fft still need normalizations
 
 srate = 1000
@@ -166,14 +104,15 @@ plt.ylabel('Amplitude (a.u.)')
 plt.show()
 ```
 
+# Inverse fast Fourier transform
 
----
-# VIDEO: The fast inverse Fourier transform
----
+The inverse fast fourier transform is called IFFT. It is applied directly to
+the Fourier coefficients, and just reconstructs the signal. Of course, it 
+does not really make sense to just transform back and forth, but it is very
+useful to apply some signal processing techniques, for example, applying
+filters on the frecuency domain, and reconstruct inn the time domain.
 
-
-
-```python
+```{python}
 # set parameters
 srate = 1000
 time  = np.arange(0,3,1/srate)
@@ -195,14 +134,62 @@ plt.ylabel('amplitude (a.u.)')
 plt.show()
 ```
 
+# The perfection of the Fourier transform
 
----
-# VIDEO: The perfection of the Fourier transform
----
+No information is lost when using the Fourier transform to go from the time
+domain to the frequency domain. This can be explained from the perspective of statistics and linear multiple regression, and the other comes from linear
+algebra.
 
+## Statistics explanation.
 
+The idea of a multiple regression is to explain variance in a dependent variable
+(outcome), using some independent variables (predictors).
 
-```python
+A statistical model has a characteristic called the degrees of freedom (DoF),
+which decreases with the number of predictors (more predictors, smaller DoF).
+When the DoF is zero, it the model will explain the signal with no errors
+(100% of the variance explaining, "memorizing" the data, a proces called
+overfitting).
+
+In the case of the Fourier transform, the input time series would be the
+dependent variable, and each template sine wave would be a predictor. We have
+the same number of predictors as data points in the dependent variable, which
+means that it is a statistical model has zero degrees of freedom. In statistics
+this would mean the model is overfit and cannot be generalize, but in this
+context it means that our transform has fully captured all the variability
+appearing in the data.
+
+## Algebra explanation
+
+For the linear algebra explanation, we start by creating the matrix $F$ where
+the template complex sine waves are the columns. If we have $n$, there will be
+$n$ sine waves, so it will be a square matrix with size $n \times n$. Each sine
+wave is independent from the rest, which means this is a full rank matrix, and
+these are always invertible. This has two implications:
+
+1. There's always a unique solution to this equation $s \times F = c$, where
+$s$ is the vector of the signal, $F$ is this Fourier matrix, and $C$ is the
+vector of Fourier coefficients. It does not matter what $s$ is, it's always
+going to be in our $n$, and $F$ fully covers (spans) all that space. That means
+$s$ can always be represented using any set of basis vectors (the Fourier
+matrix, uses complex sine waves as basis vectors).
+
+2. Because $F$ is invertible, we can reconstruct $s$ perfectly by putting the
+inverse of the Fourier transform on the right side of both of these equations
+($s = c F^{-1}$). This aso explains why there is a sign flip of the imaginary
+part of the complex sine waves in the negative frequencies: $F$ times its
+inverse must be equal to the identity matrix ($F \times F^{-1} = I$), so
+therefore the imaginary parts of $F$ must cancel with the imaginary parts of
+its inverse.
+
+## Python
+
+Here, I'm creating the $F$ matrix with a loop, creating the template a complex
+sines waves for each frequency with a length equal to the number of points of a
+hypotetical signal (`pnts`).  Then we calculate $F^{-1}$, its explicit inverse
+of matrix $F$.
+
+```{python}
 # number of time points
 pnts = 1000 
 
@@ -219,25 +206,42 @@ for fi in range(0,pnts):
 
 # compute inverse of F (and normalize by N)
 Finv = np.linalg.inv(F)*pnts
+```
+Now we plot the real and the imaginary parts of a column ($5^{th}$) of matrix
+$F$ and the same column of its inverse. The first row is the forward Fourier
+transform matrix, and the second is its inverse. The real parts of these
+signals, are represented in blue, and they are the same. The orange lines
+represent the imaginary parts. These share the same frequency, but their
+sign is flipped: one gets up when the other goes down, and down when the other
+goes up. Thus, when you add these two, the imaginary parts will cancel,
+retaining just the real part.
 
-# plot one sine wave
-plt.plot(fourTime,np.real(F[:,5]),label='real')
-plt.plot(fourTime,np.imag(F[:,5]),label='imag')
-plt.title('One column of matrix F')
-plt.legend()
-plt.show()
+```{python}
+col = 5
+direct_c, inv_c = F[:, col], Finv[:, col]
 
-plt.plot(fourTime,np.real(Finv[:,5]),label='real')
-plt.plot(fourTime,np.imag(Finv[:,5]),label='imag')
-plt.title('One column of matrix F$^{-1}$')
-plt.legend()
-plt.show()
+fig, panels = plt.subplots(2, 1, sharex=True)
+
+panels[0].plot(fourTime, np.real(direct_c), label=r"$\Re(F)$", c="lightgray")
+panels[0].plot(fourTime, np.real(inv_c), label=r"$\Re(F^{-1})$", c="k", ls=":")
+panels[0].legend(loc="upper right")
+
+panels[1].plot(fourTime, np.imag(direct_c), label=r"$\Im(F)$", c="lightgray")
+panels[1].plot(fourTime, np.real(inv_c), label=r"$\Im(F^{-1})$", c="k", ls=":")
+panels[1].legend(loc="upper right")
+fig.tight_layout()
 ```
 
-# VIDEO: Using the fft on matrices
+By the way, this Fourier matrix looks really neat if you make an image of that.
+
+```{python}
+plt.imshow(np.real(F))
+```
+
+# Using the fft on matrices
 
 
-```python
+```{python}
 # using the matlib library
 import numpy.matlib
 
@@ -253,7 +257,7 @@ data = np.matlib.repmat( np.sin(2*np.pi*10*time), nreps,1 )
 ```
 
 
-```python
+```{python}
 # FFT of data along each dimension
 
 dataX1 = scipy.fftpack.fft(data,axis=0) / npnts
@@ -266,7 +270,7 @@ print(np.shape(dataX2))
 ```
 
 
-```python
+```{python}
 # show data and spectra!
 plt.imshow(data)
 plt.xlabel('Time')
