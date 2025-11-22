@@ -1,0 +1,390 @@
+# Frequency resolution and zero padding
+
+```{python}
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+import random
+import timeit
+import scipy.fftpack
+from mpl_toolkits.mplot3d import Axes3D
+```
+
+## Sampling theorem
+
+### The importance of the sampling rate
+
+*I'm going to talk about frequency resolution, which refers to the spacing
+between subsequent frequencies*. However, before that, it is necessary to talk
+about sampling, and the limits of using discrete digital measurements to
+represent continuous analog signals.
+
+We live in an analog universe, which contains continuous signals, *for example,
+the vibrations of my vocal cords produce sounds with smooth fluctuations in
+pitch and frequency. No matter how finely my microphone samples my voice, it
+could always be sampled at smaller intervals and still record my voice*
+(up to the Planck scale).
+
+Voices and many other signals in the universe are continuous and analog,
+whereas the signals we record are not continues, but rather discretely sampled measurements. Analog signals could be imagined as a continuius infinitely
+detailed line, whereas the discrete signals would be points over that line
+with some spacing. When the sampling is high enough the sampled signal will
+look very similar to the continuous original, with this similary degrading if
+the sampling frequency is not high enough to to reflect the details of the
+original. As the measurement only can be taken once, is vital to have an
+appropriate sampling rate. This has several implications.
+
+1. Time points are discrete and is not possible to know what happened between
+them. In many cases it's reasonable to assume smooth transitions between points.
+This assumption is more reasonable for denser samplings, but if the sampling
+rate is too low relative to the fluctuations in the actual signal, then you
+could be missing features of the data, and if this information is not captured
+during measurement, it is lost.
+
+2. [no second point]
+
+Similarly, frequencies are discrete and you don't actually know what happens
+between them, reason why it is better to use stem plots or bar plots to show
+power spectra. Using line plots, imply there are amplitude values for any
+arbitrary frequency, which is not true (it may was not be possible to measure
+this frequency from the signal). However, for practical reasons, line plots
+still are used to show spectra from multiple sources at the same time.
+
+### The Nyquist frecuency
+
+It is not possible to measure any signals faster than the Nyquist frequency,
+which is half of the data sampling rate. If the continuoaus analog signal has frecuencies larger (faster) than the Nyquist frequency, are these are aliased
+into lower frequencies, becoming artifacts in the data [see later]. Thus, it is
+advisable to sample with a higher frequency than twice the highest frequency
+you expect to find in the data. *This will increase the signal to noise and
+give you higher quality estimates of the dynamics at higher frequencies that
+approach the Nyquist frequency*.
+
+### The frequency resolution
+
+The discrete temporal sampling is directly linked to the frequency resolution
+(also called spectral resolution). This concept is the distance between two
+successive frequency points, and as in the case of the temporal sampling,
+any spectral energy that may appear between them will not be captured.
+[example based on an illustration].
+
+The frequency resolution of a signal is the sampling rate divided by the number
+of points in the signal. *So if you sample at 1000 hertz, or one kilohertz, and
+you measure the signal for two thousand points (2 seconds), then the frequency resolution half an hertz.
+
+Following this formula, the frequency resolution depends on the sampling rate
+and the number of data points. Then, we can just increase the number of points
+to increase the frequency resolution [see chapter on 0 padding].
+
+In fact this also is reflected by the code for the loop-based discrete Fourier
+transform [code], where the frequency resolution is determined entirely by the
+number of points in the signal. Showing this is one of the reasons for teaching
+the slow version instead of directly using a fast FFT implementation.
+
+The number of the template sine waves that are created depends on the number of
+points. [...] When you divide the looping index by the Nyquist frequency, then
+that gives you the total range of frequencies.
+
+### Python
+
+We are going to pretend we have a signal with a sampling rate of 1000 hertz
+(1 kilohertz) with of 1 second (1000 time points). The frequency resolution is
+just the sampling rate divided by the number of points (analytic frequency
+resolution). There is also the concept of the empirical frequency resolution,
+the spacing between all of the different frequencies. In this case, the
+distance between them is linear, because we're linearly spacing numbers between
+Zero and Nyquist to generate the vector of frequencies in Hertz, and then
+average of all of those.
+
+```{python}
+# create the signal
+srate  = 1000
+pnts   = 1000
+signal = np.random.randn(pnts)
+
+
+# The loop of the Fourier transform (although we're not computing it)
+#for fi in range(0,pnts):
+    #csw = np.exp( -1i*2*np.pi*fi*fourTime )
+    #fCoefs[fi] = np.sum( np.multiply(signal,csw) ) / pnts
+
+
+# compute frequencies vector
+hz = np.linspace(0,srate/2,int(np.floor(pnts/2)+1))
+
+# compute frequency resolution
+analytic_freqres =srate/pnts
+empiric_freqres = np.mean(np.diff(hz))
+
+# print result in command window
+print('Frequency resolution is', analytic_freqres, 'Hz')
+
+```
+
+
+```{python}
+# parameters (try adjusting the srate!)
+srate  = 10
+time   = np.arange(0,2,1/srate)
+
+# create signal
+signal = np.zeros(len(time))
+signal[0:int(np.round(len(time)*.1))] = 1
+
+# spectrum and frequencies vector
+signalX = scipy.fftpack.fft(signal)
+hz = np.linspace(0,srate,len(time)) # plotting trick... frequencies really only go up to Nyquist
+
+# plot
+plt.plot(time,signal,'s-')
+plt.xlabel('Time (sec.)')
+plt.ylabel('Amplitude')
+plt.title('Time domain')
+plt.show()
+
+plt.plot(hz,2*abs(signalX),'s-')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Amplitude')
+plt.title('Frequency domain')
+plt.show()
+```
+Here we create a time domain signal that goes from zero to two seconds with a
+sampling rate of 10 hertz, and set the first 10% of the data equal to one [...].
+The frecuency resolution is $0.5$ and the Nyquist frequency is at 5Hz.
+
+If we change the signal length to 20 seconds, the frequency resolution becomes
+$0.05$. The plot on the time domain is just more detailed, but in the time
+omain it just has many more points.
+
+With a length of length of 2 sconds and a sampling rate of 100 Hz, the
+frequency resolution goes back to $0.5$, and the Nyquist frequency is at 50 Hz.
+
+The generation of the hertz vector is a bit hacky, which reaches up the total
+sampling rate instead up to the Nyquist frequency. That means all the
+frequencies past the Nyquist are incorrect, as they frequency should decrease
+to represent the negative frequencies. It is just a plottong trick.
+
+### Summary
+
+We can only understand a system if we can measure it. However, on a computer
+any signal is digitized and discrete. Any process faster than the sampling
+cannot be analyzed: signal frequencies over the Nyquist frequency will be
+aliased/lost, and we can only assume there are smooth transitions between
+successive frequency points. The sampling frequency in the time domain is
+connected to the sampling frequency resolution and the signal length.
+
+## Time-domain zero padding
+
+```{python}
+# create the signal
+signal = np.hanning(40)
+
+# note: in MATLAB I have a separate cell for the manual zero-padding.
+#       Here you can just uncomment the following line.
+#signal = np.concatenate((signal,np.zeros(len(signal))),axis=0)
+
+# time the fast Fourier transform
+signalX = scipy.fftpack.fft(signal)
+
+# extract amplitude
+ampl = np.abs(signalX)
+
+# normalized frequency units
+frequnits = np.linspace(0,1,len(signal))
+
+# and plot
+plt.plot(signal,'ks-')
+plt.xlim(0,80)
+plt.xlabel('Time (a.u.)')
+plt.ylabel('Amplitude')
+plt.title('Time domain')
+plt.show()
+
+plt.stem(frequnits,ampl)
+plt.xlim(-.01,.3)
+plt.xlabel('Frequency (a.u.)')
+plt.ylabel('Amplitude')
+plt.title('Frequency domain')
+plt.show()
+```
+
+
+```{python}
+## zero-padding in fft function
+
+# create the signal
+signal = [ 4, 6, -1, 0, 5, -4 ]
+
+# number of zeros to add after signal
+n2pad = [ 0, 10, 100 ]
+
+for zi in range(0,len(n2pad)):
+    
+    # total length of signal
+    zeropadN = len(signal)+n2pad[zi]
+    
+    # FFT and amplitude
+    sigampl   = np.abs( scipy.fftpack.fft(signal,zeropadN) )
+    
+    # one of the two normalization steps
+    sigampl = sigampl / 1
+    
+    frequnits = np.linspace(0,1,zeropadN+1)
+    
+    # and plot
+    plt.plot(frequnits[:-1],sigampl,'s-',label='%g-point FFT' %zeropadN)
+
+
+# add some plot extras
+plt.legend()
+plt.xlabel('Frequency (.5 = Nyquist)')
+plt.ylabel('Amplitude (a.u.)')
+plt.show()
+```
+
+## Frequency-domain zero padding
+
+```{python}
+# create the signal
+signal = [ 4, 6, -1, 0, 5, -4 ]
+
+# fft
+signalX = scipy.fftpack.fft(signal)
+    
+# number of zeros to add after spectrum
+n2pad = [ 0, 10, 100 ]
+
+for zi in range(len(n2pad)):
+    
+    # spectral zero-padding
+    zeropadN = len(signal)+n2pad[zi]
+    
+    # reconstruction via ifft
+    reconSig = scipy.fftpack.ifft(signalX,zeropadN) * zeropadN
+    normtime = np.linspace(0,1,len(reconSig))
+    
+    # and plot
+    plt.plot(normtime,np.real(reconSig),'s-',label='%g-point FFT' %zeropadN)
+
+# add some plot extras
+plt.legend()
+plt.xlabel('Time (norm.)')
+plt.show()
+```
+
+
+```{python}
+## Another example
+
+# create the signal
+srate  = 1000
+x      = np.array(range(0,256))/srate
+signal = np.sin(2*np.pi*20*x)>.3
+
+# number of zeros to add after spectrum
+n2pad = [ 1, 2, 5 ]
+
+# line colors
+colors = 'krb'
+
+# setup axis
+fig,ax = plt.subplots(2,1,figsize=(10,7))
+
+for zi in range(len(n2pad)):
+    
+    # fft
+    signalX = scipy.fftpack.fft(signal)
+    
+    # spectral zero-padding
+    zeropadN = 2**math.ceil(math.log(len(signal)*n2pad[zi],2))
+    
+    # reconstruction via ifft
+    reconSig = scipy.fftpack.ifft(signalX,zeropadN) * zeropadN
+    normtime = np.linspace(x[0],x[-1],len(reconSig)) # new time vector
+    srateNew = 1/np.mean(np.diff(normtime)) # new sampling rate
+    
+    # power spectrum
+    ampl = np.abs(scipy.fftpack.fft( np.real(reconSig) ))
+    hz   = np.linspace(0,srateNew/2,int(np.floor(len(reconSig)/2+1)))
+    
+    ax[0].plot(normtime,np.real(reconSig),label='%g-point IFFT' %zeropadN,color=colors[zi])
+    
+    # plot amplitude spectrum
+    ax[1].plot(hz,ampl[0:len(hz)])
+
+
+# add some plot extras
+ax[0].set_xlabel('Time (sec.)')
+ax[0].set_title('Time domain')
+# ax[0].set_xlim([.01,.1]) # optional zooming in
+
+ax[1].set_xlabel('Frequency (Hz)')
+ax[1].set_ylabel('Amplitude (non-normalized)')
+ax[1].set_title('Frequency domain')
+plt.show()
+```
+
+
+---
+# VIDEO: Sampling rate vs. signal length
+---
+
+
+
+```python
+## difference between sampling rate and number of time points for Fourier frequencies
+
+# temporal parameters
+srates  = [100, 100, 1000]
+timedur = [  1,  10,    1]
+freq    = 5 # in Hz, for the signal
+
+
+# setup plotting
+fig,ax = plt.subplots(2,1,figsize=(10,9))
+colors  = 'kmb'
+symbols = 'op.'
+legendText = [0]*len(srates)
+
+
+for parami in range(len(srates)):
+    
+    # define sampling rate in this round
+    srate = srates[parami] # in Hz
+    
+    # define time
+    time = np.arange(-1,timedur[parami],1/srate)
+    
+    # create signal (Morlet wavelet)
+    signal = np.multiply( np.cos(2*np.pi*freq*time) , np.exp( (-time**2) / .05 ) )
+    
+    # compute FFT and normalize
+    signalX = scipy.fftpack.fft(signal)
+    signalX = signalX/np.max(signalX)
+    
+    # define vector of frequencies in Hz
+    hz = np.linspace(0,srate/2,int(np.floor(len(signal)/2)+1))
+    
+    # plot time-domain signal
+    ax[0].plot(time,signal,color=colors[parami],marker=symbols[parami])
+    
+    # plot frequency-domain signal
+    ax[1].plot(hz,np.abs(signalX[0:len(hz)]),color=colors[parami],marker=symbols[parami])
+    
+    # legend text
+    legendText[parami] = f'srate={srates[parami]}, N={timedur[parami]+1} s'
+
+
+ax[0].set_xlim([-1,1])
+ax[0].set_xlabel('Time (s)')
+ax[0].set_ylabel('Amplitude')
+ax[0].set_title('Time domain')
+ax[0].legend(legendText)
+
+ax[1].set_xlabel('Frequency (Hz)')
+ax[1].set_ylabel('Amplitude')
+ax[1].set_title('Frequency domain')
+ax[1].legend(legendText)
+
+plt.show()
+```
