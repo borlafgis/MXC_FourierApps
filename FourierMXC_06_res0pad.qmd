@@ -400,265 +400,50 @@ the Fourier transform].
 
 ## Sampling rate vs. signal length
 
-In this video, I'd like to clarify two distinct but related points that people often find confusing,
-
-and that is the difference between temporal resolution and frequency resolution, and how those two are
-
-related to the sampling rate versus the signal length.
-
-So the sampling rate is just the number of sample points per second or per unit time that you acquire
-
-from the measurement device. The sampling rate defines entirely the temporal resolution.
-
-So the temporal resolution is the sampling rate regardless of the amount of time.
-
-Now, that part is really sensible.
-
-It gets trickier in the frequency domain because the frequency of resolution is not determined solely
-
-by the data sampling rate the way that the temporal resolution is.
-
-Instead, the frequency resolution is defined by a combination of the sampling rate and -- crucially --
-
-the number of time points.
-
-Now, you've already seen this in several videos before.
-
-But I want to clarify some potentially confusing points in this video.
-
-What makes this confusing in the frequency domain is that the length of the signal has nothing to do
-
-with the data sampling rate.
-
-So you can sample a lot or a little.
-
-And that really is independent of the data sampling rate.
-
-And it's the length of the signal that determines the frequency resolution, given a fixed sampling rate.
-
-And that comes right out of the Fourier transform because the number of sine waves in the Fourier transform
-
-corresponds exactly to the number of time points in the original signal.
-
-I'm going to show a few pictures and then I'll make this distinction even more clear in Matlab.
-
-So imagine you have data with a fixed sampling rate. So the data were already collected, someone gave
-
-you the data, they measured it and the measurement is done.
-
-You are doing offline spectral analyses.
-
-So that means that the Nyquist frequency is immutable, you cannot change the Nyquist frequency because
-
-the sampling rate is already fixed. So you can change the number of data points and that alone will
-
-affect the frequency resolution.
-
-So if you have relatively few data points, zero is always the lower limit.
-
-Nyquist is fixed.
-
-That's always going to be the upper limit.
-
-So for a small number of data points, the frequency resolution might look something like this.
-
-It's perhaps a little bit sparse.
-
-If you do another FFT with more data points, the frequency resolution will increase because the Nyquist
-
-frequency is fixed and the zero hertz is fixed.
-
-That's always the floor.
-
-And if you have really super-duper a lot of data points (this is a technical term here ;) ) then of course
-
-the frequency resolution will increase even further.
-
-Now, the data sampling rate doesn't change, so the temporal resolution is unchanged in any of these
-
-cases.
-
-It's only the frequency resolution that's changing.
-
-Now, of course, that is not to say that the frequency resolution has nothing to do with the sampling
-
-rate.
-
-Because you could have a small number of data points.
-
-That would give you this resolution. Or you can have exactly the same number of data points with a lower
-
-sampling rate, and that would give you a higher frequency resolution.
-
-But what we're doing here is shifting the Nyquist frequency compared to this case, which is different
-
-from what I'm doing in these cases.
-
-So in practical data analysis and offline data analysis, this is generally a more realistic scenario
-
-because the sampling rate is already fixed and what you can play around with, what you can change, is
-
-the number of time points, either the number of real time points or artificially increasing the number
-
-of time points by zero padding.
-
-All right.
-
-Now let's switch to Matlab.
-
-So what I'm going to do here is create three different signals that have two different sampling
-
-rates and two different durations of time.
-
-So it's going to have 100 hertz or 100 hertz or 1000 hertz sampling rate.
-
-And the signal will be, for 100 hertz,
-
-it will be either one second long or it will be 10 seconds long.
-
-And the 1000 hertz sampling rate is going to be one second long.
-
-So then we can compare that to this time series,
-
-which is also going to be one second long, but with a sampling rate of 100 hertz.
-
-So we're intermixing different sampling rates and time durations.
-
-And in fact, I believe the time duration is really technically longer than this.
-
-Yeah, so we start the time vector at minus one and then go up to whatever I have here.
-
-So in fact, this is two seconds and 11 seconds, and two seconds, but that part doesn't really matter.
-
-What does matter is what we do in this simulation.
-
-So define the sampling rate, define the total duration of time, which is then also encoding the number
-
-of time points. Generate a signal.
-
-The signal is something called a Morlet wavelet, which is important for signal processing and time
-
-frequency analysis.
-
-It's basically just a cosine multiplied by a Gaussian.
-
-Then I take its Fourier spectrum.
-
-In this case, I'm normalising it to its maximum amplitude, and that's because they don't really care
-
-about the units here, I just want to be able to compare the time domain and the frequency domain responses
-
-of these three signals with these three parameters.
-
-OK, and then I do some plotting.
-
-So here we go.
-
-Here we can see what this looks like.
-
-Now, the question is, which of these three signals has the highest temporal resolution and which has
-
-the highest spectral resolution?
-
-Now, in the time domain, the answer to that question is pretty trivial.
-
-The signal with the highest temporal resolution is the signal that has higher sampling rate.
-
-That's really the definition of the sampling rate: the temporal resolution of the digitized signal.
-
-So you can zoom in here and you see that the magenta stars and the black dots, these have
-
-the same number of time points here... or sorry, the time points overlap here
-
-and that's because they have the same sampling rate.
-
-Now, the magenta stars will go on longer because that goes out to 11 seconds.
-
-I'm not even plotting that here.
-
-I'm just putting the first three seconds.
-
-And then it's trivially obvious that the simulated signal with a higher sampling rate in the time domain
-
-has more points in it.
-
-So nothing really terribly interesting here. But it gets a little more confusing when we get into the
-
-frequency domain.
-
-So first of all, we can look in the frequency domain and see where do these signals go up to.
-
-So these two signals, the black dot and the magenta star, those spectral
-
-plots go up to 50 hertz because that is the Nyquist frequency of these two.
-
-So they're both sampled at 100 hertz.
-
-So they have they stop at 50 hertz.
-
-I stop the plotting at 50 hertz.
-
-So that is sensible, but it is different from this time domain signal, where the magenta star signal
-
-went all the way up to 11 Hz, so much longer in the time domain. And the frequency domain, they are the
-
-same.
-
-Now, this signal, the blue dots, that goes up to 500 hertz because that's the Nyquist frequency of
-
-this signal.
-
-All right.
-
-But the key question, the important question that we want to answer here, is which one has the highest
-
-frequency resolution?
-
-And you can see now the winner is this magenta star signal.
-
-And that's not because it has the highest sampling rate.
-
-It's because it goes on the longest -- it has the most number of time points.
-
-And that's why it has the highest frequency resolution.
-
-So I encourage you to spend some time and play around with these plots, play around with the simulation.
-
-You can try changing the sampling rates and the duration of the signals and so on.
-
-In this video, I showed you the distinction between temporal resolution and spectral resolution: temporal
-
-resolution is determined entirely by the data sampling rate, by the measurement sampling rate, while
-
-the frequency resolution is determined by the number of time points given a fixed sampling rate.
-
-Now, these concepts are, of course, highly related to each other, but it's also important to see
-
-how they provide unique contributions to the results of the Fourier transform.
+The sampling rate is the number of sample points per unit time acquired by the
+device. The sampling rate defines entirely the temporal resolution, staying the
+same regardless the length of the signal. On the other hand, frequency
+resolution is defined by the sampling rate and the number of time points.
+The sampling rate is fixed, setting the nyquist frequency of the frequency-
+domain signal, but the number of points between 0 and Nyquist will depend on
+the length of the signal
+
+### Python
+
+We create three signals with a sampling rate of 100 or 1000 hertz sampling rate,
+and a length of 2 or 11 seconds. With these temporal parameters we create a
+Morlet wavelet (a cosine multiplied by a Gaussian, important for signal
+processing). Then we take the Fourier spectrum, and normalize by its maximum
+amplitude (we do not really care about the units), and plot.
 
 ```{python}
 ## difference between sampling rate and number of time points for Fourier frequencies
 
 # temporal parameters
-srates  = [100, 100, 1000]
-timedur = [  1,  10,    1]
+srates  = [1000, 100, 100,]
+timedur = [   1,   1,  10,]
 freq    = 5 # in Hz, for the signal
+prop_pairs = {
+    "k.": (100, 11),
+    "bo": (100, 2),
+    "c.": (1000, 2),
+}
 
 
 # setup plotting
 fig,ax = plt.subplots(2,1)
-colors  = 'kmb'
-symbols = 'op.'
+#colors  = 'mbk'
+#symbols = ' .o'
 legendText = [0]*len(srates)
 
 
-for parami in range(len(srates)):
+for fmt, (srate, length) in prop_pairs.items():
     
     # define sampling rate in this round
-    srate = srates[parami] # in Hz
+    # srate = srates[parami] # in Hz
     
     # define time
-    time = np.arange(-1,timedur[parami],1/srate)
+    time = np.arange(-1, length, 1/srate)
     
     # create signal (Morlet wavelet)
     signal = np.multiply( np.cos(2*np.pi*freq*time) , np.exp( (-time**2) / .05 ) )
@@ -668,29 +453,32 @@ for parami in range(len(srates)):
     signalX = signalX/np.max(signalX)
     
     # define vector of frequencies in Hz
-    hz = np.linspace(0,srate/2,int(np.floor(len(signal)/2)+1))
+    hz = np.linspace(0, srate/2, int(np.floor(len(signal)/2)+1))
     
     # plot time-domain signal
-    ax[0].plot(time,signal,color=colors[parami],marker=symbols[parami])
+    ax[0].plot(time,signal,fmt)
     
     # plot frequency-domain signal
-    ax[1].plot(hz,np.abs(signalX[0:len(hz)]),color=colors[parami],marker=symbols[parami])
-    
-    # legend text
-    legendText[parami] = f'srate={srates[parami]}, N={timedur[parami]+1} s'
+    ax[1].plot(hz,np.abs(signalX[0:len(hz)]), fmt, label=f"{srate=}, {length=}")
 
-
-ax[0].set_xlim([-1,1])
+ax[0].set_xlim([-.5, .5])
 ax[0].set_xlabel('Time (s)')
 ax[0].set_ylabel('Amplitude')
 ax[0].set_title('Time domain')
-ax[0].legend(legendText)
+#ax[0].legend()
 
+ax[1].set_xlim(left=0, right=51)
 ax[1].set_xlabel('Frequency (Hz)')
 ax[1].set_ylabel('Amplitude')
 ax[1].set_title('Frequency domain')
-ax[1].legend(legendText)
+ax[1].legend()
 
 fig.tight_layout()
 fig.align_ylabels()
 ```
+
+On the time domain the highest temporal resolution is just tied to the sampling
+rate (1000 Hz, cyan). On the frequency domain, the sampling rate only controls
+the Nyquist frequency (50 when `srate=100`, cyan, blue), whereas the the
+highest spectral resolution is attained by the longest signal (11 seconds,
+black).
