@@ -22,7 +22,7 @@ signal, then there's no problem. If the signal fluctuates faster than we sample
 it, there will be some loss of information, leading to aphenomenon called
 "aliasing".
 
-### Python 0
+### Python 0 (not discussed)
 
 Code from a previous video
 
@@ -36,7 +36,8 @@ t  = np.arange(0,3,1/srate)
 sig = scipy.signal.detrend(
     np.multiply(
         1+np.sin(2*np.pi*2*t),
-        np.cos(np.sin(2*np.pi*5*t+np.cumsum(t/30))+t))
+        np.cos(np.sin(2*np.pi*5*t+np.cumsum(t/30))+t)
+        )
     )
 
 # Generate the selection based on the sampling
@@ -130,8 +131,8 @@ simulation does not contain any noise.
 
 In this example the blue line is the original signal and the red dots depict
 our measurements. When these are taken at 1.5 times the signal sampling rate
-we get aliasing, with an apparent frequency seemingly lower than what was truly
-present. When at 2.2 times the highest frequency of the signal we see some
+we get aliasing, with frequency  lower than the original.
+When at 2.2 times the highest frequency of the signal we see some
 additional features that did not appear on the original signal. In general it
 is advisable to sample at leas 5 times per cycle, because information that
 approaches the Nyquist frequency can still be poorly reconstructed, specially
@@ -175,9 +176,61 @@ become aliased in the down-sampled version. So therefore, in this particular
 example, you would low pass filter the data at 250 hertz before down-sampling
 to 500 hertz [for more detail, see the course on signal processing].
 
+## Stationarity and non-stationarity
+
+There are many descriptive statistics that can be used to describe time series
+data. Descriptive statistics include the mean/average, which is the expected
+value, the centre of the distribution. The mode or the median represent similar
+concepts. The variance depicts the dispersion around the mean. Other
+descriptors are the frequency, spectral shapes or the amplitude.
+
+- Mean (average or expected value)
+- Variance (dispersion around the mean)
+- Kurtosis (shape of distribution)
+- Heteroscedasticity (variance of deviances over time)
+- Mode (most frequent value)
+- Dominant frequency
+- Spectral shape
+- Phase stability
+- Amplitude
+- Covariance patterns
+
+These descriptive statistics can be calculated for a large window including the
+full length of the singnal, or over smaller windows containing just a subset of
+the time series. What it actually matters is the placement and size/width of
+the window. This question gets at the heart of the concept of a stationary
+signal: stationary means that the characteristics of the signal are the same
+everywhere you look in the signal. For example, the same average regardless the
+placement of the window
+
+A signal is stationary when its statistical characteristics do not
+significantly change over time. Therefore, if its statistics change over time
+this assumption is violated, and the signal is considered non-stationary.
+Wether a signal is considered stationary or not depends on the descriptors.
+For example, a signal can be amplitude stationary, but frequency non-
+stationary, or viceversa. Furthermore, which window size do we take to
+determine wether a signal is stationary or not? Because it may look stationary
+at one scale, but non-stationary at a different one. Finally, it is difficult
+to set a threshold to make this binary decision, specially on the case of noisy
+signals. In practice different disciplines have devised different solutions to
+address these questions.
+
 ## Effects of non-stationarities on power spectra
 
-```python
+Non-stationarities are present in all kinds of signals (e.g., biology). In
+fact, in many cases the non-stationarities are of primary interest and the
+stationary features are considered uninteresting. For example, without any
+non-stationarities, voices or music would just be a pure, monotonous tone.
+However, if we apply the Fourier transform over the full length of the signal,
+it will tell us very little about these non-stationarities.
+
+### Python 1: amplitude non-stationarity
+
+We create a normal sine wave with a frequency of 3 Hz, and multiply element-
+wise by a time-varying amplitude. In one case it will go from 1 to 10 units,
+or use the average amplitude value. Then we calculate their amplitude spectra.
+
+```{python}
 ## amplitude non-stationarity
 
 srate = 1000
@@ -216,9 +269,25 @@ plt.title('Frequency domain')
 plt.show()
 ```
 
+The red line corresponds to the stationary signal and the blue line corresponds
+to the amplitude non-stationary one. The red spectrum shows a pure sine wave at
+exactly 3 Hz. The blue signal has its peak on the same place, but has a lot of
+non-zero energy at surrounding frequencies, from 1 to 5-6 Hz. This happens
+because the non-stationarities in the signal require energy at neighboring
+frequencies, in order to perfectly reconstruct the signal (in particular, in
+the side lobes).
 
-```python
+### Python 2: frequency non-stationarity (chirp)
+
+This example is a frequency non-stationary signal containing a sine wave whose
+frequency changes over time (chirp). `signal1` creates the chirp, and `ignal2`
+is a stationary signals that uses the average of the chirp as the only
+frequency.
+
+```{python}
 ## Frequency nonstationarities
+
+n = 10_000 # set explicitly
 
 f  = [2, 10]
 ff = np.linspace(f[0],np.mean(f),n)
@@ -243,21 +312,48 @@ plt.xlim([0,20])
 plt.show()
 ```
 
+The chirp (`signal1`) has an increasing frequency over time, start ing at 2 Hz
+and speeding to 10 Hz, whereas the other (`signal2`) is just a pure sine wave.
+When we look at the frequency domain plots the stationary signal looks exactly
+as we would expect, with a sole peak with amplitude $1$ at 4Hz (mean of the
+boundaries, 2 and 6). It is easy to guess how it will look like on the time
+domain. However, the the chirped function looks like a rounded plateau rising
+around 2 Hz and decreasing around 10 Hz. This shape could appear for many
+signals, such as band-limited noise (a pure noise spectrum filtered to this
+range).
 
-```python
+Furthermore, even though both signals are amplitude stationary (amplitude does
+not change), the amplitude spectrum of the chirped signal is never close to 1.
+This is because of the non-stationarities, which cause the peak to widen,
+making it more difficult to interpret.
+
+### Python 3: different 
+
+In this example the signal is frequency- and amplitude-stationary, but only
+over specific windows, which have sharp transitions between them. The peaks
+of the amplitude spectrum represent all the individual elements, with 4 peaks
+for four components (1, 3, 6, 12 Hz). However, the amplitudes are not well
+represented: for example, the amplitude at 3 Hz should be 10, but on the
+spectrum it is just 2.5. This value kinda makes sense, because the 3 Hz signal
+is 1/4 of the time series, and the amplitude is also 1/4 of the initial
+specification. Once again it is difficult to tell how the time domain would
+look like just by looking at the amplitude spectrum, for example, it could be
+just the four sine components, with some random noise added on top.
+
+```{python}
 ## sharp transitions
+
+n = 10_000 # set explicitly
 
 a = [10, 2, 5,  8]
 f = [ 3, 1, 6, 12]
 
-timechunks = np.round(np.linspace(0,n,len(a)+1))
-sig1 = a[0]*np.sin(2*np.pi*f[0]*t[int(timechunks[0]):int(timechunks[1])] )
-sig2 = a[1]*np.sin(2*np.pi*f[1]*t[int(timechunks[1]):int(timechunks[2])] )
-sig3 = a[2]*np.sin(2*np.pi*f[2]*t[int(timechunks[2]):int(timechunks[3])] )
-sig4 = a[3]*np.sin(2*np.pi*f[3]*t[int(timechunks[3]):int(timechunks[4])] )
+timecuts = np.round(np.linspace(0,n,len(a)+1)).astype(int)
 
-signal = np.concatenate((sig1,sig2,sig3,sig4),axis=0)
-
+signal = np.concatenate(
+    [a[i]*np.sin(2*np.pi*f[i]*t[timecuts[i]:timecuts[i+1]]) for i in range(4)],
+    axis=0
+    )
 
 signalX = scipy.fftpack.fft(signal)/n
 hz = np.linspace(0,srate/2,int(np.floor(n/2)+1))
@@ -272,16 +368,30 @@ plt.xlim([0, 20])
 plt.show()
 ```
 
+### Python 4: phase reversal
 
-```python
+In this example we see a phase reversal: we generate a pure 10 Hz signal where
+both amplitude and frequency are fixed, but the phase of half of the signal is
+reversed by multiplying by $-1$. On the time domain we see the signal looks
+somewhat normal, but on the frequency domain there is something strange. The
+Fourier coefficient for the signal frequency is exactly $0$. This is because
+each half of the signal is the phase-opposite of the other, making them to
+cancel out. In this case the non-stationarity stems from the change in phase,
+which is absorbed by the side-lobes around the peak of the spectrum (9.5, 10.5
+Hz), which decay as we go further from the original peak. [In the future we
+will see some methods to recover information from non-stationary signals, in
+this case you could use a windowing method, or Welch's method]
+
+```{python}
 ## phase reversal
 
 srate = 1000
-ttime = np.arange(0,1-1/srate,1/srate) # temp time, for creating half the signal
 time  = np.arange(0,2-2/srate,1/srate) # signal's time vector
+signal = np.sin(2*np.pi*10*time)
 n = len(time)
 
-signal = np.concatenate( (np.sin(2*np.pi*10*ttime),-np.sin(2*np.pi*10*ttime)) ,axis=0)
+# Apply reversal to the 2nd half
+signal[1000:] *= -1
 
 plt.plot(time,signal)
 plt.title('Time domain')
@@ -297,8 +407,16 @@ plt.title('Frequency domain')
 plt.show()
 ```
 
+### Python 5: sharp edges
 
-```python
+In this example we have a sharp edge in the time domain, which cannot be
+represented using sine waves. However, the Fourier theorem can approximate
+the edge near-perfectly by using many, many sine waves at many frequencies.
+Note that if we add a stationary signal atop of the edge we still will be able
+to reconstruct the stationary component with the expected frequency and
+amplitude.
+
+```{python}
 ## edges and edge artifacts
 
 n = len(t)
@@ -306,7 +424,7 @@ x = np.linspace(0,1,n)>.5
 
 # uncommenting this line shows that nonstationarities 
 # do not prevent stationary signals from being easily observed
-#x = x + .08*np.sin(2*np.pi*6*t)
+x = x + .08*np.sin(2*np.pi*6*t)
 
 plt.plot(t,x)
 plt.title('Time domain')
@@ -320,11 +438,17 @@ plt.plot(hz,2*np.abs(xX[0:len(hz)]))
 plt.xlim([0,20])
 plt.title('Frequency domain')
 plt.show()
-
 ```
 
+### Python 6: spike in the frequency domain
 
-```python
+For this example we will reverse our usual order, creating our time-domain
+signal from the frequency domain. Here we just create a $0$ signal and add a
+sole impulse/spike in the time domain. It corresponds to a simple sine wave
+in the time domain, so it is interesting to think about a sine wave as a
+ringing artifact from a sharp edge, or an impulse in the frequency domain.
+
+```{python}
 ## spike in the frequency domain
 
 # frequency spectrum with a spike
@@ -346,7 +470,6 @@ plt.title('Time domain')
 plt.show()
 
 ```
-
 
 ## Solutions for non-stationary time series
 
