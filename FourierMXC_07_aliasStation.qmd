@@ -473,7 +473,21 @@ plt.show()
 
 ## Solutions for non-stationary time series
 
-```python
+The power spectrum genreated from the fourier transform of a non-stationary
+signal can be very difficult to interpret  if it is calculated over the full
+length. The solution is to apply a different category of analyses called
+time-frequency analysis, which describe how the spectral features of a signal
+change over time, a major topic in signal processing.
+
+### Python 1: linear chirp and short-time FFT
+
+Here we create a signal with linear chirp, very similar to the one we saw on
+the [previous lesson]. Its frequency increases from 10 Hz to 30 Hz over the
+course of 5 seconds (amplitude stationary, but frequency non-stationary).
+Based on its power spectrum, it'd be very difficult to guess what the time
+domain signal would look like.
+
+```{python}
 ## create signal (chirp) used in the following examples
 
 # simulation details and create chirp
@@ -501,8 +515,25 @@ plt.show()
 
 ```
 
+The short time FFT, does not assume stationarity over the full signal, applying
+FFT over a small time windows in which we assume that the data are likely to be
+stationary or at least less severely non-stationary. Each time window, produces
+its own power spectrum, which are plotted considering with time and frequency
+and as the x and y axis, respectively, whereas the power is represented by
+color.
 
-```python
+We calculate the number of windows subtracting the window length (`winlen`)
+from the signal length (`npts`), and then dividing by the minus the window
+divided by the displacement between steps (`stepsize`). Then we loop over the
+steps, taking the values within the window and doing some calculations.
+First we multiply by the Hann tapper [plotted on the video], to suppress any
+sharp edges at the edges of the window, which would induce artifacts on the
+frequency-domain signal. Then we apply the FFT, pick the relevant part of the
+amplitude, and place it on the output matrix `tf`, and plot. As you can see,
+the time-frequency plot nicely recovers the dynamics of the signal, starting at
+10 Hz and increasing up to 30 Hz.
+
+```{python}
 ## short-time FFT
 
 winlen   = 500  # window length
@@ -522,8 +553,7 @@ hwin = .5*(1-np.cos(2*np.pi*np.linspace(0,winlen,winlen-1) / (winlen-1)))
 for ti in range(0,int(numsteps)-1):
     
     # extract part of the signal
-    tidx    = range(ti*stepsize+1,ti*stepsize+winlen)
-    tapdata = signal[tidx]
+    tapdata = signal[np.arange(ti*stepsize+1,ti*stepsize+winlen)]
     
     # FFT of these data
     x = scipy.fftpack.fft( np.multiply(hwin,tapdata) ) /winlen
@@ -531,20 +561,38 @@ for ti in range(0,int(numsteps)-1):
     # and put in matrix
     tf[:,ti] = 2*np.abs(x[0:len(hz)])
 
-
-plt.contourf(range(0,int(numsteps)),hz,tf,40)#,'linecolor','none')
-plt.ylim([0,50])
-plt.clim([0,.5])
+extent = (-.5, tf.shape[1]-.5, -.5, hz[-1]+.5)
+plt.imshow(tf, interpolation="none", origin="lower", extent=extent)
+plt.ylim(bottom=-.5, top=50)
 plt.xlabel('Time steps')
 plt.ylabel('Frequency (Hz)')
 plt.title('Time-frequency power via short-time FFT')
-plt.colorbar
-plt.show()
-
+plt.colorbar(orientation="horizontal")
 ```
 
+### Python 2: wavelet convolution
 
-```python
+The second method that I will show you in this video is called wavelet
+convolution. We create a Morlet wavelet, a little wave that tapers to zero on
+both sides (pure sine wave multiplied by a Gaussian). For time-frequency
+analysis, we create wavelets with different frequencies, which are convolved
+with the signal. The result is a time series of complex dot products, similar
+to the Fourier coefficients. The difference is that now we have a wavelet
+coefficient per frequency and also per time point. The rest stays the same,
+extracting the magnitude of the dot product gets the amplitude, and the angle
+relative to the positive real axis gets the phase.
+
+We are going to define 30 frequencies linearly spaced between 2 and 50 Hz, a
+frequency window that fully encompasses the frequencies appearing on the signal.
+The loop goes over the frequencies creating a complex Morlet wavelet (`csw`)
+in a similar way as we would for the Fourier Transform (it has a shape
+parameter `s` for the wavelet). `cmwX` is the Fourier transform of the wavelet
+scaled by its own maximum. It is multiplied element-wise by `signalX`, to get
+the convolution through spectral multiplication, and get the inverse Fourier
+transform. Then `tf` stores the magnitude as twice the absolute value of the
+result of this complex convolution. Then we just plot.
+
+```{python}
 ## Morlet wavelet convolution
 
 # frequencies used in analysis
@@ -585,6 +633,12 @@ plt.ylabel('Frequency (Hz)')
 plt.title('Time-frequency power via complex Morlet wavelet convolution')
 plt.show()
 ```
+
+The result is similar to the short time Fourier transform. Note there are some
+subtle but important differences between how  they work, each with its own set
+of advantages and limitations [See MXC site for details, or the course on signal
+processing].
+
 ## Windowing and Welch's method
 
 ```python
@@ -713,3 +767,4 @@ plt.title('Instantaneous frequency')
 plt.show()
 
 ```
+
