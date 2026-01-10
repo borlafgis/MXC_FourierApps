@@ -840,3 +840,306 @@ plt.show()
 
 ```
 
+Another way to approach dealing with spectral analysis of non-stationary data is to compute something
+
+called instantaneous frequency.
+
+This is a different way of thinking about the frequency of a signal, and if the signal changes in frequency
+
+over time, then computing instantaneous frequency can provide some interesting insights into the signal
+
+that you couldn't get just from the Fourier transform.
+
+OK, so previously in this course, we are thinking about frequency as the number of cycles per unit
+
+time, or unit space.
+
+So for example, imagine this is a tick mark at one second, and this is a tick mark at two seconds.
+
+So this is a one-second period of time.
+
+Now here you have one cycle of activity.
+
+So that means that this signal is oscillating at one hertz. And this signal has two fluctuations within
+
+the same time window.
+
+So this is two hertz.
+
+And that's basically the way that we've been thinking about frequency: the number of cycles per unit
+
+time or unit space or any other dimension.
+
+But there is a different way to think about frequency. If you think about some oscillating process
+
+and the phases of the oscillating process are going around the circle.
+
+So this would be for a pure sine wave.
+
+This would be a unit circle, the cosine axis and the sine axis.
+
+Or you might also call this the real axis and the imaginary axis.
+
+It's this complex plane.
+
+So then you think how at one time point the phase, the instantaneous phase, the phase angle
+
+time series would be here.
+
+And at the next time point the phase would be here, and the next time point the phase would be here, and
+
+so on.
+
+And this phase angle time series spinning around this circle corresponds to the oscillation going up
+
+and down, so the sine wave going up and down.
+
+But what would happen if the speed of this dot moving along, this circle changed over time?
+
+So sometimes it starts moving faster and sometimes it's moving slower. Then it might speed up again and
+
+it might slow down again.
+
+So the speed of this little particle can change over time.
+
+That's a really interesting concept and it provides a different way of thinking about frequency.
+
+So now we can think about frequency, not as the number of cycles per unit time, but as the change
+
+or the speed of this particle as it goes around the circle.
+
+And that is called "instantaneous frequency."
+
+It's a way of estimating the frequency at each time point. So at each time point in the signal, you can
+
+have a distinct frequency that is different from frequencies elsewhere in the signal.
+
+And again, it's all based on the change of the phase angle time series from one time point to the next
+
+time point, or you could also say the derivative of the phase angle time series.
+
+Here's the formula for computing instantaneous frequency. You can see that the key part of this formula
+
+is exactly what I just described.
+
+It's the phase at this time-frequency point, minus the phase at the previous time point.
+
+Now, here, this extra F is just indicating that if you have a complex signal or a signal that contains
+
+multiple spectral components -- I should have said complicated, not complex, because this would be
+
+still a real value signal, just sort of complicated in the sense that it can contain energy at many
+
+frequencies.
+
+Then you can actually define an instantaneous frequency from multiple different frequency ranges.
+
+Anyway, this is the key part of this formula.
+
+The phase at this time point minus the phase at the previous time point.
+
+This is a normalization factor that would put the data into whatever is the unit of frequency that you're
+
+considering.
+
+So for a time series, this is often in Hertz.
+
+So this delta character corresponds to the sampling rate.
+
+And then this is 2 pi.
+
+All right, I'd like now to show you this in Matlab so you can see this implemented, and you can see
+
+what it looks like.
+
+What I'm going to do is create something called a linear chirp.
+
+This is a signal that changes its frequency over time and here's how it's going to work.
+
+It's going to change from seven hertz,
+
+so the signal will start oscillating at seven hz, and it's going to steadily, linearly increase its
+
+frequency up to twenty five hertz at the last time point.
+
+And this is the formula for that.
+
+So it's still sine of 2 pi f t, except now the f is a vector.
+
+Let me show you some of this.
+
+So now f is a vector... I can plot this.
+
+This is going to be the vector of frequencies of the sine wave. So it's a little bit
+
+weird to look at a plot like this at first because this is time in seconds.
+
+So four seconds. And this is frequencies in Hertz.
+
+When the signal starts, it's going to be at seven hertz and at around two seconds it's going to be
+
+oscillating at around 11 hertz.
+
+Here is where I compute the instantaneous frequency of the signal.
+
+So first we need to extract the phase angle time series.
+
+I'm doing that through something called the Hilbert transform, which is actually in the signal processing
+
+toolbox.
+
+Although you can find non-
+
+toolbox Hilbert transform functions online.
+
+So I take the Hilbert transform of the signal and then I take the angle of the Hilbert transform of
+
+the signal.
+
+And let's already start by looking at this.
+
+So let me run all of this.
+
+So now I'm going to plot time by signal and you can see that the signal starts off,
+
+so it's an oscillation all the way through,
+
+it's a sine wave all the way through.
+
+It starts off a little bit slow and it's getting faster and faster and faster.
+
+And here it's faster than it is in the beginning.
+
+Now, I can plot the phase angle time series, which I call angels here (misspelled).
+
+And you can see that these are the phase angle time series.
+
+So they're going up and then it looks like there's a steep or sharp jump down to minus pi.
+
+This is in radians, but you know that this value and this value are the same because this is just minus
+
+pi and plus pi, which you can also think of as being zero and two pi.
+
+And here is where I compute the rest of the instantaneous frequency vector. So here I apply the diff function,
+
+which is the discrete derivative. And I take the difference of the angles.
+
+I'll show you what this unwrap function does in a minute.
+
+And then here I'm dividing by two pi, divided by the sampling rate.
+
+Now, if you remember the formula that I showed in the slides a minute ago, that actually said that it's
+
+this difference value, this derivative times delta over 2 pi.
+
+So in here I'm just turning that around.
+
+So this is two pi over delta, the sampling rate, but then I'm dividing it instead of multiplying it.
+
+OK, so first let me plot everything and show you that it works.
+
+So here is again the time domain signal.
+
+This is really interesting.
+
+This is the static Fourier transform. It's the power spectrum of the Fourier transform over this entire signal.
+
+And you can see that it looks sort of accurate in the sense that all of the frequencies
+
+that are in the time domain are also present in this amplitude spectrum.
+
+However, when you look at the amplitude spectrum, you don't really get a sense of what the time domain
+
+signal looks like.
+
+The amplitudes are also quite a bit smaller, almost an order of magnitude smaller than the original
+
+signal.
+
+So this sort of thing I've talked about before, but the general idea is that when there are non-stationarities
+
+in the time domain, then the amplitude spectrum from the Fourier transform is increasingly difficult
+
+to interpret visually.
+
+Of course, this is still perfectly accurate.
+
+It's just harder to interpret.
+
+Anyway, here you see the time series of instantaneous frequencies.
+
+So, again, this is time on the x axis and on the Y axis is frequency, and you can see that it starts
+
+from seven and it goes up to twenty five.
+
+So this is a pretty accurate reconstruction.
+
+You get some little weird things at the edges here that's resulting from the Hilbert transform.
+
+OK, so now let me show you what this unwrap function does. We have a plot of the angles, like this. So you
+
+can see that all these angles get reset each time they wrap around the cycle.
+
+So this function unwrap. What this is going to do....
+
+Let me turn on the zoom to zoom in here a bit.
+
+So what unwrap is going to do is say, well, here is an apparent skip. This is not really dropping
+
+because this is this point is really continuous to this point.
+
+So instead, what I'm going to do is add this point,
+
+so shift this point all the way up here.
+
+And then, of course, the next time point gets shifted.
+
+So this entire piece is going to be shifted up to go on top of this line.
+
+And then there's going to be another steep drop here.
+
+And we don't want that.
+
+So this line is going to be shifted upwards so that it's smooth.
+
+So you'll see that here.
+
+Now, this looks like a straight line.
+
+Well, actually, not totally a straight line going up because the derivative is changing.
+
+But you can see it no longer looks like the typical sawtooth phase angle time series.
+
+And these values are also going up to around four hundred.
+
+So this is still in radians.
+
+This is 400 pie. And 400 pi seems like a weird number at first, but it actually does make sense.
+
+It's the process going around the circle many, many, many, many, many times.
+
+And eventually you get up to four hundred pi. So you can see what would happen if we got rid of this
+
+unwrap function.
+
+You still mostly get an accurate result here, but there the kind of odd jumps where it's going all
+
+the way down and that's really not accurate.
+
+And the reason why that's happening is that you're computing the derivative and then you have this value
+
+that seems to change really rapidly, even though it's not.
+
+So that's why unwrapping the angles is the right thing to do, practically, in order to get this formula
+
+to work.
+
+I hope you found that interesting and perhaps a bit eye opening.
+
+It's a different way of thinking about the frequency of a signal.
+
+There are actually many signals in nature and in physics that use frequency or changes in frequency
+
+to code information, including FM radio. In fact, FM stands for frequency modulated radio.
+
+So it's quite useful to be a little bit familiar with this idea of instantaneous frequency.
