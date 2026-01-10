@@ -675,8 +675,74 @@ plt.title('Frequency domain (FFT)')
 plt.show()
 ```
 
+Generally we just apply Fourier transform over the full length of the time
+series, obtaining what we could call the "static spectrum", one static picture
+of the entire time series. However, non-stationarities, this static picture may
+not be very informative. For example, if the signal contains phase non-
+stationarities some Fourier coefficients might cancel out.
 
-```python
+A possible solution is to use Welch's method (also called windowing) involves
+splitting the signal into different ($n$) time periods (windows) and apply the
+Fourier transform over each one. This returns as many spectra as windows ($n$).
+And then we average them together to get the final spectrum.
+
+If the signal is purely stationary the static and the windowed spectrum will
+look similar, albeit the frequency resolution will be higher for the former,
+as it consider more time points. However, the latter (windowed) may be more
+accurate.
+
+### Python
+
+We create a signal with a sampling rate of 1 kHz, and length of 2000 that gets
+doubled to accomodate for the non-stationarity we will introduce on the signal.
+It will have two near-equal sine waves with a frequency of 10 Hz, with the
+second having a phase shift of $\pi$. Then we just plot the amplitude spectrum.
+
+If we look at the time domain plot we can see the waves are idedentical, but
+there is a cut in the middle when phase changes. On the amplitude spectrum we
+would expect to see a narrow peak at the wave frequency (10 Hz). However, there
+is exactly 0 energy at exactly 10 hertz because the $pi$ phase shift (half a
+cycle/circle), cancelling out the energy carried by both sides.
+
+```{python}
+srate = 1000
+npnts = 4000 # actually, this times 2!
+time = np.arange(0, npnts)/srate
+freq = 10 # Hz
+
+signal = np.concat(
+    [np.sin(2*np.pi*freq*time[:2000]), np.sin(2*np.pi*freq*time[2000:] + np.pi)]
+    )
+
+hz = np.linspace(0, srate/2, int(np.floor(len(time)/2))+1)
+ampspect = np.abs(scipy.fftpack.fft(signal)/len(time))
+ampspect[1:] *= 2
+
+fig, panels = plt.subplots(2, 1, sharex=False)
+panels[0].plot(time, signal)
+panels[0].set_title('Time domain')
+panels[0].set_ylabel('Amplitude')
+panels[0].set_xlabel('Time (s)')
+
+panels[1].plot(hz, ampspect[:len(hz)])
+panels[1].set_xlim(left=0, right=20)
+```
+
+We can address this challenge by taking windows, computing their FFT, extract
+the amplitudes, and combine them. This windowing approach (Welch's method)
+allows to ignore any phase non-stationarities [¿cannot address amplitude
+non-stationarities?].
+
+The principle is fairly similar to the short time Fourier transform, with the
+difference is that there's no overlap, and the fact we're summing all the
+windows together. `winlen` indicates the window will have a length of 1000
+points (not 1000 milliseconds). `hwin` is Hann's taper, which can be used to
+adress sharp edges/edge artifacts. Then we loop over the bins, extracting the window
+(`tmpdata`), multiply by the taper, apply the FFT and divide by the window
+length (`x`), and then we add two times the magnitude of the positive frequency
+Fourier coefficients (amplitudes). Finally we divide by the number of windows.
+
+```{python}
 ## Now for Welch's method
 
 # parameters
@@ -703,7 +769,7 @@ for ti in range(int(nbins)):
     x = scipy.fftpack.fft(hwin*tmpdata)/winlen
     
     # and put in matrix
-    welchspect = welchspect + 2*np.abs(x[0:len(hzL)])
+    welchspect += 2*np.abs(x[0:len(hzL)])
 
 # divide by nbins to complete average
 welchspect = welchspect/nbins
@@ -717,6 +783,12 @@ plt.ylabel('Amplitude')
 plt.title('Frequency domain (Welch''s method)')
 plt.show()
 ```
+
+Now the spectrum peaks at 10 Hz and comes down a little bit. These
+non-stationarities are driven by the taper. It is applied to address issues
+induced by windows edges. In this case that's not really an issue, as there's
+an even number of sine waves within each window, so if I remove the taper the
+result will become more accurate (in this particular case!).
 
 ## Instantaneous frequency
 
