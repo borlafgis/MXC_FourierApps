@@ -1,4 +1,4 @@
-```python
+```{python}
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -10,14 +10,8 @@ import scipy.fftpack
 from mpl_toolkits.mplot3d import Axes3D
 from scipy import signal
 from scipy import interpolate
-```
-
-## How the 2D FFT works
-
-### Reusable functions
 
 
-```python
 def make_hypercube(start, end, freq, phase):
 
     # shape the spatial variables
@@ -36,10 +30,8 @@ def make_hypercube(start, end, freq, phase):
 
     xp = (y * np.cos(phase)) + (x * np.sin(phase))
     return np.sin(2 * np.pi * freq * xp)
-```
 
 
-```python
 def extract_power_angle(space_cube, axes=(-2, -1)):
 
     # 2D FFT, shift low frequencies to the center
@@ -49,55 +41,73 @@ def extract_power_angle(space_cube, axes=(-2, -1)):
         )
     
     return np.abs(freq_cube), np.angle(freq_cube)
-```
 
 
-```python
-def plot_cube(space_cube, power_cube, phase_cube, start=61, end=121, itp="nearest", wait=.01):
+def plot_slices(space_cube, power_cube, phase_cube, nslices=4, start=61, end=121, itp=None):
 
-    # Makr a mosaic figure
-    canvas = plt.figure()
-    panels = canvas.subplot_mosaic([
-        ["Space domain", "Amplitude spectrum"],
-        ["Space domain", "Phase spectrum"]
-        ])
+    # Make a subplots
+    figsize = (6.4, nslices * 1.6)
+    canvas, panels = plt.subplots(
+        nrows=nslices, ncols=3, sharex=True, sharey=True, figsize=figsize
+        )
+    panels[0, 0].set_title("Space domain")
+    panels[0, 1].set_title("Amplitude spectrum")
+    panels[0, 2].set_title("Phase spectrum")
 
     # Set the panel styles
-    for panel_name, panel in panels.items():
-        panel.set_title(panel_name)
+    for panel in panels.flat:
         panel.axis("off");
 
     # plot
-    for slice_idx in range(space_cube.shape[0]):
+    slices = np.round(np.linspace(0, space_cube.shape[0]-1, nslices)).astype(int)
+    for row_idx, slice_idx in enumerate(slices):
         
         # show original image
-        panels["Space domain"].imshow(
+        panels[row_idx, 0].imshow(
             space_cube[slice_idx, :, :],
             interpolation=itp
             )
         
         # show amplitude spectrum
-        panels["Amplitude spectrum"].imshow(
+        panels[row_idx, 1].imshow(
             power_cube[slice_idx, start:end, start:end],
             interpolation=itp
             )
         
         # show phase spectrum
-        panels["Phase spectrum"].imshow(
+        panels[row_idx, 2].imshow(
             phase_cube[slice_idx, start:end, start:end],
             interpolation=itp
             )
-        
-        display.display(canvas)
-        display.clear_output(wait=True)
-        
-        time.sleep(wait)
+    
+    canvas.tight_layout()
 ```
 
-### Plot changing frequency
+## How the 2D FFT works
 
+Computers represent images as matrices, with one or several numbers to represent
+the color (monochrome vs. color). To implement a 2D FFTover this bidimensional
+matrix, you can take the 1D FFT of the image over one dimension, obtaining a
+matrix of the Fourier coefficients for each frequency along that axis. If the
+dimension was columns, the frequency will change over the rows, with the first
+is the DC component. The FFT is applied again over this matrix of coefficients,
+but over the other dimension.
 
-```python
+The result is bidimensional matrix of Fourier coefficients where the frequency increases towards the centre, which will contain the Nyquist. This matches the
+convention of disciplines such as Physics that show the negative frequencies on
+the left, the DC component on the center, and the positive frequencies on the
+right. However, the convention on image processing domain is to place the
+low frequencies at the center, and increasingly higher frequencies towards the
+edges, with Nyquist on the corners.
+
+## Interpretation
+
+Even though the implementation is relatively straightforward, it is fairly difficult to understand how the features of an image are reflected  on the 2D
+Fourier plane. Here we will show a series of simple examples underlining how spatial frequency, phase, and location affect the results of the transform.
+
+## Effect of frequency
+
+```{python}
 change_freq = (
     make_hypercube(
         start=-91,
@@ -108,14 +118,73 @@ change_freq = (
     .squeeze()
     )
 
-plot_cube(change_freq, *extract_power_angle(change_freq))
+plot_slices(change_freq, *extract_power_angle(change_freq))
 ```
+
+So what you see here is a sine gradient.
+
+So it's a two dimensional sine wave and the spatial frequency is increasing over time.
+
+Here are the two images resulting from the 2D Fourier transform.
+
+We have the amplitude spectrum and the phase spectrum.
+
+So you'll notice that what I've done here is to change the sine wave frequency over time, but hold
+
+all the other variables constant.
+
+For example, the phase, the orientation.
+
+This is just like a real scientific experiment where you hold as many variables constant as possible,
+
+and you change only one variable at a time in order to understand the effects of that variable independent
+
+of all the other variables.
+
+Anyway, the important point of this video is to see that as the sine wave frequency increases,
+
+the center location of this is moving further and further away from the origin.
+
+And that's because the center of this block corresponds to lower frequencies and the frequencies get
+
+higher as we move further away from the center.
+
+Now it look like this thing was getting wider and narrower, so the width of the peak was changing,
+
+but that's actually not a really interesting feature.
+
+It's actually just due to the non-stationarities related to the spatial frequency relative to the
+
+size of this image.
+
+You would see the same thing in the time domain, in the amplitude spectrum of a sine wave that has a
+
+non-integer number of cycles in the time window that you compute the Fourier transform of.
+
+Now, the phase spectrum (let me run this again). The phase spectrum initially looks like it's changing
+
+a lot, but actually these are mostly rounding errors and you shouldn't pay too much attention to them.
+
+To understand why, you can refer back to the video about interpreting phase values and the effects
+
+of uncertainty and noise when the amplitude is close to zero.
+
+And in this case, the amplitude of all of these sine waves is basically zero, plus some computer rounding
+
+error, for pretty much everywhere in this for a plane except for this line here.
+
+Now, one thing I'd like to mention about this line here of sine wave frequencies, spatial frequencies,
+
+these are arbitrary numbers that I picked because they looked good on my computer screen.
+
+Depending on your screen resolution, these values may or may not look really good.
+
+So I encourage you to play around with these numbers and find a range that looks reasonable for you.
 
 ### Plot changing the phase
 
-
-```python
-change_freq = (
+```{python}
+change_phase = (
     make_hypercube(
         start=-91,
         end=91,
@@ -125,13 +194,125 @@ change_freq = (
     .squeeze()
     )
 
-plot_cube(change_freq, *extract_power_angle(change_freq))
+plot_slices(change_phase, *extract_power_angle(change_phase))
 ```
+
+OK, so this was all for 2D sine waves with one specific phase; one specific orientation of
+
+this gradient. It's interesting to watch what happens when we change the phase of this 2D sine patch.
+
+So now I'm going to change this to be pi over four instead of pi over two. Run this cell again. And
+
+now you see that the gradient is oriented this way and you can see the same phenomenon.
+
+So this little splotch of amplitude is getting further and further away from the origin as the sine
+
+wave frequencies increase.
+
+However, now they're going up and down the diagonal here instead of on the horizontal line here.
+
+Again, this kind of pulsating of size that it sometimes gets larger and sometimes gets smaller.
+
+That's not a terribly interesting feature; that's really just related to non-stationarities introduced
+
+by clipping at the boundaries of this image.
+
+OK, now for the next experiment.
+
+Here, I'm going to change the phase of the sine. Here I change the phase once -- it was fixed at pi/2
+
+and then I fixed it to pi/4.
+
+Now, what I'm going to do is fix the sine wave frequency.
+
+So we just leave the sine wave frequency constant and the sine phase is going to vary over time between
+
+zero and pi.
+
+So let's run this video and see what the effects are on the 2D power spectrum.
+
+So you can see this is rotating around.
+
+And here you see that.
+
+These amplitudes -- these little buttons -- are moving around the frequency plane like this. So let's run
+
+this again.
+
+So the sine patch is rotating around, this is like the face of a clock, you know, this would make
+
+a really cool clockface.
+
+And now notice what's happening in the amplitude spectrum: The distance away from the origin is constant.
+
+So these things are always the same distance away from the origin of this amplitude spectrum plane.
+
+And instead, they are rotating around the origin as the gradient, the phase of this sine wave, is rotating.
+
+Again, I encourage you to pause the video and change these parameters and keep exploring this code.
+
+Now for the third experiment. The third experiment is going to be all about the physical location,
+
+the spatial location of the image.
+
+So in this case, I'm using a thresholded 2D Gaussian. That's going to create a ball that will
+
+move around on this plane.
+
+So let me first run the video and then I'll walk you through a little bit of the code.
+
+So here's this ball that's moving around.
+
+In this case, it's just going up and down.
+
+Now, what's interesting is that the amplitude spectrum is basically unchanged.
+
+Again, you see there's some, you know, rounding error, some really tiny changes out here, but those
+
+you can basically just ignore.
+
+The important point is that as this ball moves around in space, the features of the ball, the spectral
+
+features of the ball, are not changing.
+
+It's the same ball everywhere it goes.
+
+However, it's moving in location and that is represented in the phase.
+
+So you can see that the
+
+phase dynamics are changing, it looks like they're rotating around, and the amplitude is remaining
+
+constant. So you can change the width of the Gaussian with this parameter here. So we can try changing
+
+this to 50.
+
+And when I run this again, watch what happens to the size of this ball and the size of this ball in
+
+the amplitude spectrum.
+
+So you see this one got bigger and this one also got a bit bigger.
+
+And again, there's some, you know, weird stuff happening here, but that's mostly just due to non-
+
+stationarities, resulting from the edges of this image and the finite size of this plane.
+
+So in this video, I introduced you to the two dimensional Fourier transform. I explained mechanistically
+
+how it works by applying the one dimensional Fourier transform to the columns and then a 1D Fourier
+
+transform to the rows of that resulting Fourier coefficients
+
+matrix. I showed several movies in Matlab that I hope will help you build some intuition about the relationship
+
+between spatial frequency, phase, spatial location and the two key result from the two dimensional Fourier
+
+transform, which are the amplitude spectrum and the phase spectrum.
 
 ### Plot changing both
 
 
-```python
+```{python}
 # Prepare the coordinates
 lims  = [-91,91]
 coords = np.arange(*lims)
@@ -151,6 +332,6 @@ is_high = (gauss2d > .9)
 ```
 
 
-```python
-plot_cube(is_high, *extract_power_angle(is_high))
+```{python}
+plot_slices(is_high, *extract_power_angle(is_high), start=0, end=182)
 ```
