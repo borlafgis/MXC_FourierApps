@@ -105,38 +105,77 @@ with medication in Parkinson's disease patients and other motor diseases.
 
 ## Rhythmicity in brain waves
 
+This example shows an electroencephalogram (EEG), a record of electrical brain activity taken while the individual was sitting quietly in a dark room. It is
+well known that the brain exhibits rhythmicity at multiple time scales. But
+during rest most prominent brain activity pattern has a frequency of 10 Hz.
+This was discovered almost 100 years ago by Hans Berger, who called it the
+"alpha" rhythm, the first letter of the Greek alphabet, as it was the most
+prominent feature of the data that he saw.
+
+`EEGrestingState.mat` contains a variable called `EEGdata`, which is a one by
+122.880 time points and a second variable called `srate`, depicting the
+sampling rate (1024 Hz). To plot the data in the time domain we will create an
+arbitrary time vector going from 0 to just under the number of time points,
+which is divided by the sampling rate. When we visualize it we see it is 2
+minutes long (120 s.). The initial impression from visualizing the full time
+series, is that is noisy, but it is only because brain dynamics are faster than
+what you can be distinguished at that scale. If we zoom to a smaller time scale, there are a lot of interesting dynamics that are happening at a smaller time
+scale. On the period 43-45 we can see the alpha rythm relatively well, but it
+does show differently along the recording.
+
 ```{python}
 
 matdata = sio.loadmat('FourierMXC_09_apps/EEGrestingState.mat')
 
 # extract data from mat file
-eegdata = matdata['eegdata']
-eegdata = eegdata[0]
-srate   = matdata['srate']
-srate   = srate[0]
+eegdata = matdata['eegdata'].flatten()
+srate   = matdata['srate'].item()
 
 
 n = len(eegdata)
 timevec = np.arange(n)/srate
 
-# compute amplitude spectrum
-dataX    = scipy.fftpack.fft(eegdata)/n
-ampspect = 2*abs(dataX)
-hz       = np.linspace(0,srate/2,int(np.floor(n/2)+1))
+start = int(43 * srate)
+end = int(45 * srate)
 
-plt.plot(timevec,eegdata)
+plt.plot(timevec[start:end], eegdata[start:end])
 plt.xlabel('Time (sec.)')
 plt.ylabel('Amplitude (muV)')
 plt.title('Time domain signal')
-plt.show()
+plt.xlim(43, 45)
+```
+
+Here we plot the amplitude spectrum with and without smoothing (black and gray, respectively), mostly to dampen the effect of the non-stationarities and make
+it easier to interpret. There are 3 note-worthy features on this spectrum: the narrow peak here at 50 hertz is an artifact caused by electrical line noise.
+It is very narrow in frequency (moreso in the unfiltered spectrum), so we can
+safely ignore it.
+
+The second relevant feature the decrease of power as frequeny increases. This
+trend called "one over f" (1/f), a common spectral feature present in many
+biological and physical systems. ~~People have speculated that this reflects a scale-free or a fractal-like organization in nature and in this case, in functional brain organization.~~
+
+~~Or you could say the other way around: as frequencies get higher, the power is decreasing. Now, you have to ignore this little bit here. I've detrended this time series, so that actually removes the DC component, the zero hertz component.~~
+
+Finally, there is a robust peak in the power spectrum at around 10 hertz: the
+alpha rhythm. It is surprisingly wider compared with artifact we mentioned
+before. This happens because the electrical line noise at 50 Hz is very
+stationary, whereas the peak of alpha is broad because it is a non-stationary
+feature in the data, as brain activity reflects temporal dynamics in
+perception, thought and consciousness.
+
+```{python}
+hz, ampspect = to_freq(eegdata, srate)
+filtered = scipy.signal.savgol_filter(ampspect, window_length=50, polyorder=1)
 
 # show amplitude spectrum
-plt.plot(hz,ampspect[0:int(np.floor(n/2)+1)])
+plt.plot(hz, ampspect, color="gray", lw=.25)
+plt.plot(hz, filtered, c="k", lw=1)
 plt.xlim([0,70])
 plt.ylim([0,.6])
 plt.title('Frequency domain')
 plt.show()
 ```
+
 
 ## Convolution theorem
 
