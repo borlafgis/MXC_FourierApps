@@ -145,8 +145,10 @@ plt.title('Time domain signal')
 plt.xlim(43, 45)
 ```
 
-Here we plot the amplitude spectrum with and without smoothing (black and gray, respectively), mostly to dampen the effect of the non-stationarities and make
-it easier to interpret. There are 3 note-worthy features on this spectrum: the narrow peak here at 50 hertz is an artifact caused by electrical line noise.
+Here we plot the amplitude spectrum with and without smoothing (black and gray,
+respectively), mostly to dampen the effect of the non-stationarities and make
+it easier to interpret. There are 3 note-worthy features on this spectrum: the
+narrow peak here at 50 hertz is an artifact caused by electrical line noise.
 It is very narrow in frequency (moreso in the unfiltered spectrum), so we can
 safely ignore it.
 
@@ -179,52 +181,74 @@ plt.show()
 
 ## Convolution theorem
 
+Convolution is an operation in which two input signals are combined to produce
+an output signal containing features from the the inputs. One of the inputs is
+called "signal", whereas the other is called "kernel". The convolved result is
+longer than either inputs, but the extra parts at either side will be cut off
+in the end.
+
+The procedure for implementing convolution in the time domain is to flip the
+kernel and slide it through the signal, computing the dot product between one
+and the other at each time step. Convolution can also be implemented in the
+frequency domain thanks to the convolution theorem, which states that
+convolution in the time domain is equivalent to multiplication in the frequency
+domain. Thus, we can apply the FT to the signal and multiply them element-wise
+(frequency-wise), and then apply the inverse FT to bring the convolved
+to the time domain.
+
+~~This turns out to be a much faster and much more elegant implementation of convolution compared to a sliding time series of dot products.~~
+
+### Python
+
+Over the first block we define define the signal and the kernel. Within
+`convolve_over` we apply the FFT over both the signal and the kernel, which
+are multiplied element-wise to obtain the convolution between these spectra.
+The result is brought to the time tdomain using the inverse FFT, and trimmed
+to match the length of the original signal. The last block just plots the
+signal, the kernel, and the convolved result obtained with our implementation
+and with Numpy.
+
 ```{python}
+
+# Make the signal and the kernel
 
 m = 50 # length of signal
 n = 11 # length of kernel
 
 signal = np.zeros(m)
-signal[range(int(m*.4),int(m*.6))] = 1
-
+signal[int(m*.4):int(m*.6)] = 1
 
 kernel = np.zeros(n)
-kernel[range(int(n*.25),int(n*.8))] = np.linspace(1,0,int(n*.55))
+kernel[int(n*.25):int(n*.8)] = np.linspace(1,0,int(n*.55))
+
+# Apply the convolution
+def convolve_over(kernel, signal):
+    result_length = (len(kernel) + len(signal)) - 1
+    trim_length = int(len(kernel)//2)
+    product = np.multiply(
+        scipy.fftpack.fft(signal, result_length),
+        scipy.fftpack.fft(kernel, result_length)
+    )
+    convolved = np.real(scipy.fftpack.ifft(product))
+    return convolved[trim_length:-trim_length]
 
 
-# plot signal
-plt.subplot2grid((3,1),(0,0))
-plt.plot(signal)
-plt.title('Signal')
+my_convolve = convolve_over(kernel, signal)
+numpy_convolve = np.convolve(signal, kernel, mode='same')
 
-# plot kernel
-plt.subplot2grid((3,1),(1,0))
-plt.plot(kernel)
-plt.title('Kernel')
+# Plot
+conv_canvas, conv_panels = plt.subplots(3, 1, sharex=True, layout="constrained")
 
+conv_panels[0].plot(signal, ".-")
+conv_panels[0].set_title('Signal')
 
-# setup convolution parameters
-nConv = m+n-1
-halfk = np.floor(n/2)
+conv_panels[1].plot(kernel, ".-")
+conv_panels[1].set_title('Kernel')
 
-# convolution as point-wise multiplication of spectra and inverse
-mx = scipy.fftpack.fft(signal,nConv)
-nx = scipy.fftpack.fft(kernel,nConv)
-# here's the convolution:
-convres = np.real( scipy.fftpack.ifft( np.multiply(mx,nx) ) )
-# chop off the 'wings' of convolution
-convres = convres[range(int(halfk),int(len(convres)-halfk+1))]
-
-
-# plot the result of convolution
-plt.subplot2grid((3,1),(2,0))
-plt.plot(convres,'b')
-plt.title('Result of convolution')
-
-# for comparison, plot against the Python convolution function
-plt.plot(np.convolve(signal,kernel,mode='same'),'ro')
-
-plt.show()
+conv_panels[2].plot(numpy_convolve,'co', label="np.convolve")
+conv_panels[2].plot(my_convolve,'b.-', label="convolve_over")
+conv_panels[2].set_title('Result of convolution')
+conv_panels[2].legend()
 ```
 
 ## Narrowband temporal filtering
