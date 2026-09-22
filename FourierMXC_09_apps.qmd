@@ -255,15 +255,13 @@ conv_panels[2].legend()
 
 ```{python}
 
+# extract data from mat file
 matdata = sio.loadmat('FourierMXC_09_apps/braindata.mat')
 
 # extract data from mat file
-timevec = matdata['timevec']
-timevec = timevec[0]
-srate    = matdata['srate']
-srate    = srate[0]
-braindata = matdata['braindata']
-braindata = braindata[0]
+timevec = matdata['timevec'].flatten()
+srate    = matdata['srate'].item()
+braindata = matdata['braindata'].flatten()
 
 
 n = len(timevec)
@@ -272,11 +270,11 @@ n = len(timevec)
 plt.plot(timevec,braindata)
 plt.xlim([-.5,1.5])
 plt.xlabel('Time (sec.)')
-plt.ylabel('Voltage (\muV)')
+plt.ylabel(r"Voltage $\mu$V)")
 plt.title('Time domain')
 plt.show()
-
-
+```
+```{python}
 # compute power spectrum
 dataX    = scipy.fftpack.fft(braindata)/n
 ampspect = 2*np.abs(dataX)**2
@@ -286,12 +284,14 @@ hz       = np.linspace(0,srate,n) # out to srate as trick for the filter
 plt.plot(hz,ampspect[0:len(hz)])
 plt.xlim([0,100])
 plt.ylim([0,500])
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Voltage (\muV)')
-plt.title('Frequency domain')
+plt.xlabel("Frequency (Hz)")
+plt.ylabel(r"Voltage ($\mu$V)")
+plt.title("Frequency domain")
 plt.show()
+```
 
 
+```{python}
 # specify which frequencies to filter
 peakFiltFreqs = [2,47] # Hz
 
@@ -311,7 +311,7 @@ for fi in range(0,len(peakFiltFreqs)):
     plt.plot(timevec,filtdat,c[fi],label='%g Hz' %peakFiltFreqs[fi])
     plt.xlim([-.5,1.5])
     plt.xlabel('Time (sec.)')
-    plt.ylabel('Voltage (\muV)')
+    plt.ylabel(r"Voltage ($\mu$V)")
     plt.title('Time domain')
 
 #plt.legend()
