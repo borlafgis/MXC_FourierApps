@@ -17,9 +17,23 @@ from PIL import Image
 ## Rhythmicity in walking (gait)
 
 Gait, the the waling cadence is quite rythmic, which makes it amenable to
-Fourier analysis. In this use case we will compare the gait dynamics of Parkinson patients (pd1-si.txt) and healthy control individuals (y1-23.si.txt), both from [physiobank](https://physionet.org/physiobank/database/gaitdb/). `gait.mat` contains two datasets, both with two columns and 222 rows. One corresponds to Parkinson's disease patients (COLOR) and another for healthy matched controls, people with similar age, education, lifestyle, etc. but without the disease (COLOR). We plot our data so the first column is on the x axis, representing the time. The second is represented on the y axis shows the stride time in seconds (delay between one step and the next). Just by comparing the lines is possible to see the Parkinson's patient gait is slower (higher stride time) and more variable than it is for control.
+Fourier analysis. In this use case we will compare the gait dynamics of
+Parkinson patients (`pd1-si.txt`) and healthy control individuals
+(`y1-23.si.txt`), both from
+[physiobank](https://physionet.org/physiobank/database/gaitdb/). `gait.mat`
+contains two datasets, both with two columns and 222 rows. One corresponds to
+Parkinson's disease patients (COLOR) and another for healthy matched controls,
+people with similar age, education, lifestyle, etc. but without the disease
+(COLOR). We plot our data so the first column is on the x axis, representing
+the time. The second is represented on the y axis shows the stride time in
+seconds (delay between one step and the next). Just by comparing the lines is
+possible to see the Parkinson's patient gait is slower (higher stride time) and
+more variable than it is for control.
 
-FT is not directly applicable for this data, as it is not regularly space, thus, it will need to be transformed before we contine. For that, we create a new array with a regular sampling where the step timestamps are ones and the rest of observations are zeroes.  
+FT is not directly applicable for this data, as it is not regularly space,
+thus, it will need to be transformed before we contine. For that, we create a
+new array with a regular sampling where the step timestamps are ones and the
+rest of observations are zeroes.  
 
 ```{python}
 # Load the data. If you get an error on this line,
@@ -105,7 +119,8 @@ with medication in Parkinson's disease patients and other motor diseases.
 
 ## Rhythmicity in brain waves
 
-This example shows an electroencephalogram (EEG), a record of electrical brain activity taken while the individual was sitting quietly in a dark room. It is
+This example shows an electroencephalogram (EEG), a record of electrical brain
+activity taken while the individual was sitting quietly in a dark room. It is
 well known that the brain exhibits rhythmicity at multiple time scales. But
 during rest most prominent brain activity pattern has a frequency of 10 Hz.
 This was discovered almost 100 years ago by Hans Berger, who called it the
@@ -119,7 +134,8 @@ arbitrary time vector going from 0 to just under the number of time points,
 which is divided by the sampling rate. When we visualize it we see it is 2
 minutes long (120 s.). The initial impression from visualizing the full time
 series, is that is noisy, but it is only because brain dynamics are faster than
-what you can be distinguished at that scale. If we zoom to a smaller time scale, there are a lot of interesting dynamics that are happening at a smaller time
+what you can be distinguished at that scale. If we zoom to a smaller time scale,
+there are a lot of interesting dynamics that are happening at a smaller time
 scale. On the period 43-45 we can see the alpha rythm relatively well, but it
 does show differently along the recording.
 
@@ -274,6 +290,9 @@ plt.ylabel(r"Voltage $\mu$V)")
 plt.title('Time domain')
 plt.show()
 ```
+
+abc
+
 ```{python}
 # compute power spectrum
 dataX    = scipy.fftpack.fft(braindata)/n
@@ -322,61 +341,71 @@ plt.show()
 
 ```{python}
 # load image and convert to float
-lenna = np.asarray( Image.open("FourierMXC_09_apps/Lenna.png") )
-imgL  = np.mean(lenna,axis=2)
-
-# plot original image
-plt.subplot2grid((2,2),(0,0))
-plt.imshow(imgL,cmap=plt.cm.gray)
-plt.axis('off')
-plt.title('Original image')
-
+lenna_rgb = np.asarray( Image.open("FourierMXC_09_apps/Lenna.png") )
+lena_gray  = np.mean(lenna_rgb,axis=2)
 
 # and its power spectrum
-imgX  = scipy.fftpack.fftshift(scipy.fftpack.fft2(imgL))
+imgX  = scipy.fftpack.fftshift(scipy.fftpack.fft2(lena_gray))
 powr2 = np.log(np.abs(imgX))
 
-plt.subplot2grid((2,3),(1,0))
-plt.imshow(powr2,cmap=plt.cm.gray)
-plt.clim([0,15])
-plt.axis('off')
-plt.title('Amplitude spectrum')
+# Define the limits for spectrum potting
+smin, smax = 0, 15
+
+# Plot the image and its spectrum
+img_canvas, img_panels = plt.subplots(1, 2)
+img_panels[0].imshow(lena_gray,cmap="gray")
+img_panels[0].axis('off')
+img_panels[0].set_title('Original image')
+
+img_panels[1].imshow(powr2,cmap="gray", vmin=smin, vmax=smax)
+img_panels[1].axis('off')
+img_panels[1].set_title('Amplitude spectrum')
+```
 
 
+```{python}
 # filter kernel is a Gaussian
 width = .1 # width of gaussian (normalized Z units)
-lims  = np.shape(imgL)
+lims  = np.shape(lena_gray)
 xr    = stats.zscore(np.arange(lims[0]))
 [x,y] = np.meshgrid(xr,xr)
 
 # add 1- at beginning of the next line to invert the filter
 gaus2d = np.exp( -( x**2 + y**2 ) / (2*width**2) )
 
+# Create the modulated spectrum (Add a tiny value to avoid log(0) errors)
+filtered_shifted = np.multiply(imgX, gaus2d)
+modulated = np.log(np.abs(filtered_shifted) + 1e-9)
+
+
+spec_canvas, spec_panels = plt.subplots(1, 2)
 
 # show Gaussian
-plt.subplot2grid((2,3),(1,1))
-plt.imshow(gaus2d,cmap=plt.cm.gray)
-plt.axis('off')
-plt.title('Gain function')
+spec_panels[0].imshow(gaus2d, cmap="gray", vmin=smin, vmax=1)
+spec_panels[0].axis('off')
+spec_panels[0].set_title('Gain function')
 
 
 # show modulated spectrum
-plt.subplot2grid((2,3),(1,2))
-plt.imshow( np.log(np.abs( np.multiply(imgX,gaus2d)) ) ,cmap=plt.cm.gray)
-plt.axis('off')
-plt.clim([0,15])
-plt.title('Modulated spectrum')
+spec_panels[1].imshow(modulated, cmap="gray", vmin=smin, vmax=smax)
+spec_panels[1].axis('off')
+spec_panels[1].set_title('Modulated spectrum')
 
 
 # and the reconstructed image
-imgrecon = np.real(scipy.fftpack.ifft2( np.multiply(imgX,gaus2d) ))
+imgrecon = np.real(
+    scipy.fftpack.ifft2(
+        scipy.fftpack.ifftshift(filtered_shifted)
+        )
+    )
 
-plt.subplot2grid((2,2),(0,1))
-plt.imshow( imgrecon ,cmap=plt.cm.gray)
-plt.axis('off')
-plt.title('Filtered image')
-
-plt.show()
+filt_canvas, filt_panels = plt.subplots(1, 2)
+filt_panels[0].imshow(lena_gray,cmap="gray")
+filt_panels[0].axis('off')
+filt_panels[0].set_title('Original image')
+filt_panels[1].imshow(imgrecon, cmap="gray")
+filt_panels[1].axis('off')
+filt_panels[1].set_title('Filtered image')
 ```
 
 ## Image narrowband filtering
