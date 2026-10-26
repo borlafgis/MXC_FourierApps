@@ -518,6 +518,13 @@ plot_filtered(lena_gray, mult_highpass)
 
 ## Image narrowband filtering
 
+The 2D Fourier transform can be used to isolate two features of an image that
+are separable in the frequency domain. To demonstrate that, we will create two images of 2D sine waves, sum them together, and then use the FT to separate
+them back into their original images.
+
+First we define two sines and phases (`sinephas` and `sinefreq`, respectively),
+use them to create and sum up the waves.
+
 ```{python}
 
 # specify vector of sine phases
@@ -529,7 +536,7 @@ sinefreq = [.1 , .05] # arbitrary units
 
 # sine wave initializations
 lims  = [-91,91]
-[x,y] = np.meshgrid(range(lims[0],lims[1]),range(lims[0],lims[1]))
+[y, x] = np.meshgrid(range(lims[0],lims[1]), range(lims[0],lims[1]))
 
 
 # compute 2D sine gradients
@@ -540,54 +547,64 @@ xp = x*np.cos(sinephas[1]) + y*np.sin(sinephas[1])
 img2 = np.sin( 2*np.pi*sinefreq[1]*xp )
 
 # combine images
-img = img1+img2
+img = img1 + img2
+```
 
+If we plot them, we see the first wave
+moves across the vertical axis with a higher frequency than the second, which
+moves around the diagonal. Our aim is to take the FT of the combined image and
+remove the first wave from the combined image. For that, we take the FT and its
+magnitude (just for visualization). If we plot the shifted version of the
+magnitude (low frequencies around the center) we see two "stars" corresponding
+to the frequencies of the second image, whereas the vertical line corresponds
+to the first image. If we just substract the column containing the line and
+take the 2D inverse FT, we will obtain the second image.
 
+If take the non-shifted spectrum (low frequencies at the eges) and sum along
+the columns, we see the component we want to remove is actually in the first column. However, this column actually contains information from both
+frequencies, so zeroing it out also wold damage the frequency we want to keep.
+To avoid issues we will replace this column with its neighbour on the shifted
+spectrum. So, if this one is the first, we replace it with the last column.its neighbor. Then we take the 2D inverse FFT of this modified spectrum to
+reconstruct the image, which now contains solely the diagonal gradient.
 
-# show original two gradients
-plt.subplot2grid((3,2),(0,0))
-plt.imshow(img1)
-plt.axis('off')
-plt.title('Image 1')
+```{python}
 
-plt.subplot2grid((3,2),(0,1))
-plt.imshow(img2)
-plt.axis('off')
-plt.title('Image 2')
+fugure, panels = plt.subplots(2, 3, subplot_kw=clean_kw)
+
+panels[0, 0].imshow(img1)
+panels[0, 0].set_title('Image 1')
+
+panels[0, 1].imshow(img2)
+panels[0, 1].set_title('Image 2')
 
 
 # show sum
-plt.subplot2grid((3,2),(1,0))
-plt.imshow(img)
-plt.axis('off')
-plt.title('Combined')
+panels[0, 2].imshow(img)
+panels[0, 2].set_title('Combined')
 
 
 # FFT
 imgX    = scipy.fftpack.fft2(img)
 imgXamp = np.abs(imgX)
+imgXshift = scipy.fftpack.fftshift(imgXamp)
 
 # show amplitude spectrum
-plt.subplot2grid((3,2),(1,1))
-plt.imshow(scipy.fftpack.fftshift(imgXamp))
-plt.axis('off')
-plt.clim([0,500])
-plt.title('Amplitude spectrum')
+panels[1, 0].imshow(imgXshift[46:138, 46:138], vmin=0, vmax=500)
+panels[1, 0].set_title('Amplitude spectrum')
 
 # show sum down columns
-plt.subplot2grid((3,2),(2,0))
-plt.stem(np.sum(imgXamp,axis=1))
-plt.title('Column sum')
+panels[1, 1].plot(np.sum(imgXamp,axis=0))
+panels[1, 1].set_title('Column sum')
 
 # replace 1st column with last
-imgX[0,:] = imgX[-1,:]
+imgX[:, 0] = imgX[:, -1]
 
 # reconstructed image
 imgrecon  = np.real( scipy.fftpack.ifft2(imgX) )
 
-plt.subplot2grid((3,2),(2,1))
-plt.imshow(imgrecon)
-plt.title('Filtered image')
+panels[1, 2].imshow(imgrecon)
+panels[1, 2].set_title('Filtered image')
 
+fig.align_titles()
 plt.show()
 ```
