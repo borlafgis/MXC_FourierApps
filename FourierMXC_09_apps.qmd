@@ -31,7 +31,7 @@ possible to see the Parkinson's patient gait is slower (higher stride time) and
 more variable than it is for control.
 
 FT is not directly applicable for this data, as it is not regularly space,
-thus, it will need to be transformed before we contine. For that, we create a
+thus, it will need to be transformed before we continue. For that, we create a
 new array with a regular sampling where the step timestamps are ones and the
 rest of observations are zeroes.  
 
@@ -269,6 +269,36 @@ conv_panels[2].legend()
 
 ## Narrowband temporal filtering
 
+Filtering allows to dissociate frequencies mixed on the same sensor recording.
+FM radio works this way, whith each radio station broadcasting in a different
+frequency range. Our radio receiver just implements a narrowband filter that
+suppresses the energy of most of the spectrum, except for one narrow range
+which contains the radio station that you want to listen to.
+
+Records of electric brain activity contain information at many distinct
+frequencies associated with different brain cells. Here we are going to apply
+narrowband temporal filters to isolate specific frequencies of brain activity.
+
+To apply a narrowband filter, we take the FFT of the data, and create a gain
+function with the same length as the signal spectrum, which only is non-zero at
+the frequencies we intend to keep. Then we point-wise multiply the original
+spectrum by the gain function, and take the inverse FT to bring the filtered
+spectrum to the time domain. Ultimately, this is just a convolution operation.
+Notice that our gain function is smooth (a gaussian window) instead of a 0-1-0
+block. This is because sharp edges in the frequency domain can produce ringing/sinusoidal artifacts in the time domain.
+
+There are several ways to implement narrowband filtering (SEE COURSE ON SIGNAL
+PROCESSING), but here we just focus on frequency domain Gaussians just because
+it is fast and easy to implement.
+
+### Python
+
+We load the data and plot it in Python in the time domain. The signal is the
+trace of electrical brain activity. More specifically, it is a record of the
+activity from the visual cortex, the part of the brain that processes most of
+the sensory input coming through the eyes. At times 0.0 and 0.5 s, there was a
+change in the picture shown on a screen.
+
 ```{python}
 
 # extract data from mat file
@@ -291,53 +321,106 @@ plt.title('Time domain')
 plt.show()
 ```
 
-abc
+When we apply the FFT and calculate the power spectrum. On the overall plot we see a sharp decrease in power with a $1/f$ shape. Then we plot the inset, which
+contains the rhythmic activity we saw around the 0.5 - 1.0 s range in the time
+domain plot. This cycle is contained in the frequencies within the 40 to 60
+Hertz, peaking around the upper 40s.
 
 ```{python}
 # compute power spectrum
 dataX    = scipy.fftpack.fft(braindata)/n
-ampspect = 2*np.abs(dataX)**2
-hz       = np.linspace(0,srate,n) # out to srate as trick for the filter
+power_spect = (2*np.abs(dataX))**2
 
-# plot power spectrum
-plt.plot(hz,ampspect[0:len(hz)])
-plt.xlim([0,100])
-plt.ylim([0,500])
-plt.xlabel("Frequency (Hz)")
-plt.ylabel(r"Voltage ($\mu$V)")
-plt.title("Frequency domain")
-plt.show()
+# Create the frequency vector strictly up to the Nyquist frequency
+hz_full = scipy.fftpack.fftfreq(n, d=1/srate)
+is_positive = (hz_full >= 0)
+is_relevant = is_positive & (hz_full <= 100)
+
+# plot the full power spectrum
+fig, ax = plt.subplots()
+ax.plot(hz_full[is_positive], power_spect[is_positive])
+ax.set_ylim(bottom=0)
+ax.set_xlim(left=0, right=hz_full[is_positive].max())
+
+# Make an inset ax with the relevant part
+axins = ax.inset_axes([.30, .30, .60, .60], xlim=(0, 100), ylim=(0, 500))
+axins.plot(hz_full[is_relevant], power_spect[is_relevant])
+indicator = ax.indicate_inset_zoom(axins, edgecolor="black")
+for connector_idx in [1, 2]:
+    indicator.connectors[connector_idx].set_visible(True)
 ```
 
+This block filter (keeps) and plots two frequencies in the time domain: 2 Hz,
+and 47 Hz. For each of these frequencies we generate a gaussian (NO FURTHER
+EXPLANATION PROVIDED). If we plotted the filtered data, we would see that the
+frequencies not overlapping with the gaussian have been zeroed out. The 2 Hz
+line (black) tracks the slow changes, whereeas the 47 hertz signal (red)
+appears around the aforementioned 0.50 - 1.25 second period. Changing the
+centering to 50 hertz (blue) would reveal that said signal starts and ends a
+bit earlier, which is best revealed by a time frequency analysis (SEE SECTION ON
+solutions for non-stationary signals).
 
 ```{python}
-# specify which frequencies to filter
-peakFiltFreqs = [2,47] # Hz
+peakFiltFreqs = [2, 47, 50]  # Targets in Hz
+c = ['k', 'r', 'b']          # Colors for plotting
 
-c = 'kr' # line colors
+fig, ax2 = plt.subplots()
 
-# loop over frequencies
-for fi in range(0,len(peakFiltFreqs)):
+# Loop over the target frequencies
+for fi in range(0, len(peakFiltFreqs)):
     
-    # construct the filter
-    x  = hz-peakFiltFreqs[fi] # shifted frequencies
-    fx = np.exp(-(x/4)**2)    # gaussian
+    # Construct a symmetric Gaussian filter using the full data length
+    x_pos = hz_full - peakFiltFreqs[fi]
+    x_neg = hz_full + peakFiltFreqs[fi]  # Mirrored negative frequency counterpart
     
-    # apply the filter to the data
-    filtdat = 2*np.real( scipy.fftpack.ifft( np.multiply(dataX,fx) ))
+    # Combine both sides to preserve real-signal symmetry
+    fx = np.exp(-(x_pos/4)**2) + np.exp(-(x_neg/4)**2)
     
-    # show the results
-    plt.plot(timevec,filtdat,c[fi],label='%g Hz' %peakFiltFreqs[fi])
-    plt.xlim([-.5,1.5])
-    plt.xlabel('Time (sec.)')
-    plt.ylabel(r"Voltage ($\mu$V)")
-    plt.title('Time domain')
+    # Apply filter to raw FFT coefficients (ifft handles its own scaling)
+    filtdat = np.real(scipy.fftpack.ifft(dataX * fx))
+    
+    # Plot the filtered time-series data
+    ax2.plot(timevec, filtdat, c[fi], label='%g Hz' % peakFiltFreqs[fi])
 
-#plt.legend()
-plt.show()
+# Format the time-domain plot
+ax2.set_xlim([-.5, 1.5])
+ax2.set_xlabel('Time (sec.)')
+ax2.set_ylabel(r"Voltage ($\mu$V)")
+ax2.set_title('Filtered Signal (Time Domain)')
+ax2.legend()
 ```
 
 ## Image smoothing and sharpening
+
+The convolution theorem makes possible to take the FT of a signal, attenuate
+specific frequencies (bandpass?), and then compute the inverse FT, obtaining a
+modified signal where the impact of the attenuated has been dampened. This
+procedure also can be applied to pictures with the 2D FT.
+
+
+~~In this video, I'll use the convolution theorem to implement a high pass and a low pass filter of a famous picture.~~
+
+In the 1D case we would take a curve with the "weight" of each specific
+frequency. Similarly, on the 2D case we have a 2D (Gaussian) curve that can
+be represented in grayscale with black representing the lowest values and white
+the highest. By applying element-wise multiplication to the shifted image
+spectrum (low frequencies on the centre), the high spatial frequencies are
+zeroed out or attenuated while preserving low frequency information. Then it is
+a matter of shifting the spectrum (bring low frequencies to the corners) and
+apply the inverse 2D FT to obtain the image without the high spatial
+frequencies.
+
+~~Now, one thing that you need to be careful of in practice is that these two Fourier spectra show the coefficients shifted such that the low frequencies are in the center and the higher frequencies, towards the Nyquist, are at the edges.~~
+
+### Python
+
+The first step is just to load the image we will be working with `Lena.png`.
+It has three dimensions corresponding to the rows, the columns and the color
+(RGB). We will just average the third dimension, keeping just rows and columns.
+Then we compute the 2D FFT of the image and shift the Fourier coefficients so
+the low frequencies are in the center and the higher frequencies go out towards
+the edges. The amplitude spectrum is displayed with log scaling because
+otherwise the range of values makes the spectrum very difficult to read.
 
 ```{python}
 # load image and convert to float
@@ -350,18 +433,29 @@ powr2 = np.log(np.abs(imgX))
 
 # Define the limits for spectrum potting
 smin, smax = 0, 15
+clean_kw = {'frame_on': False, 'xticks': [], 'yticks': []}
 
 # Plot the image and its spectrum
-img_canvas, img_panels = plt.subplots(1, 2)
+img_canvas, img_panels = plt.subplots(1, 2, subplot_kw=clean_kw)
 img_panels[0].imshow(lena_gray,cmap="gray")
-img_panels[0].axis('off')
 img_panels[0].set_title('Original image')
 
 img_panels[1].imshow(powr2,cmap="gray", vmin=smin, vmax=smax)
-img_panels[1].axis('off')
 img_panels[1].set_title('Amplitude spectrum')
 ```
 
+Now we create a specialized Gaussian, using the matrices of $x$ and $y$
+values and the formula. This gaussian would act as a low-pass filter, retaining
+just the lower frequencies, the coarser details. If we invert the gaussian,
+we retain the high frequencies, the sharp, high-contrast edges. These are
+applied with element-wise multiplication between the image spectrum and the Gaussian. We can plot the modulated spectrum afterwards.
+
+Here we can see the low-pass filtered version, because the high spatial
+frequencies are attenuated. If we invert the gaussian function, we would
+attennuate the low frequencies, 
+
+
+Then we apply 
 
 ```{python}
 # filter kernel is a Gaussian
@@ -371,42 +465,56 @@ xr    = stats.zscore(np.arange(lims[0]))
 [x,y] = np.meshgrid(xr,xr)
 
 # add 1- at beginning of the next line to invert the filter
-gaus2d = np.exp( -( x**2 + y**2 ) / (2*width**2) )
-
-# Create the modulated spectrum (Add a tiny value to avoid log(0) errors)
-filtered_shifted = np.multiply(imgX, gaus2d)
-modulated = np.log(np.abs(filtered_shifted) + 1e-9)
+lowpass_gaus2d = np.exp( -( x**2 + y**2 ) / (2*width**2) )
+highpass_gaus2d = np.abs(1 - lowpass_gaus2d)
 
 
-spec_canvas, spec_panels = plt.subplots(1, 2)
+mult_lowpass = np.multiply(imgX, lowpass_gaus2d)
+mult_highpass = np.multiply(imgX, highpass_gaus2d)
 
-# show Gaussian
-spec_panels[0].imshow(gaus2d, cmap="gray", vmin=smin, vmax=1)
-spec_panels[0].axis('off')
-spec_panels[0].set_title('Gain function')
+def plot_modulation(gain, multiplied, kw=clean_kw):
 
+    # Create the modulated spectrum (Add a tiny value to avoid log(0) errors)
+    modulated = np.log(np.abs(multiplied) + 1e-9)
+    
+    # Plot
+    canvas, panels = plt.subplots(1, 2, subplot_kw=kw)
+    panels[0].imshow(gain, cmap="gray", vmin=smin, vmax=1)
+    panels[0].set_title('Gain function');
+    panels[1].imshow(modulated, cmap="gray", vmin=smin, vmax=smax)
+    panels[1].set_title('Modulated spectrum');
 
-# show modulated spectrum
-spec_panels[1].imshow(modulated, cmap="gray", vmin=smin, vmax=smax)
-spec_panels[1].axis('off')
-spec_panels[1].set_title('Modulated spectrum')
-
-
-# and the reconstructed image
-imgrecon = np.real(
-    scipy.fftpack.ifft2(
-        scipy.fftpack.ifftshift(filtered_shifted)
-        )
-    )
-
-filt_canvas, filt_panels = plt.subplots(1, 2)
-filt_panels[0].imshow(lena_gray,cmap="gray")
-filt_panels[0].axis('off')
-filt_panels[0].set_title('Original image')
-filt_panels[1].imshow(imgrecon, cmap="gray")
-filt_panels[1].axis('off')
-filt_panels[1].set_title('Filtered image')
+plot_modulation(lowpass_gaus2d, mult_lowpass)
+plot_modulation(highpass_gaus2d, mult_highpass)
 ```
+
+Then we shift the coefficients again and apply the 2D inverse FT. If we did not
+do so the  transformation will not be okay, as the FT expects the low frequency
+information to be at the edges and the high frequency coefficients to be in the
+center.
+
+
+
+```{python}
+
+def plot_filtered(original, multiplied):
+    reconstructed = np.real(
+        scipy.fftpack.ifft2(
+            scipy.fftpack.ifftshift(multiplied)
+            )
+        )
+
+    filt_canvas, filt_panels = plt.subplots(1, 2, subplot_kw=clean_kw)
+    filt_panels[0].imshow(original,cmap="gray")
+    filt_panels[0].set_title('Original image')
+    filt_panels[1].imshow(reconstructed, cmap="gray")
+    filt_panels[1].set_title('Filtered image');
+
+plot_filtered(lena_gray, mult_lowpass)
+plot_filtered(lena_gray, mult_highpass)
+```
+
+
 
 ## Image narrowband filtering
 
